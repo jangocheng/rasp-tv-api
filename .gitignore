@@ -1,0 +1,4 @@
+node_modules
+app.js
+routes/*.js
+assets/js/*.js
