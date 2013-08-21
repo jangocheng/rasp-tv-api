@@ -1,0 +1,6 @@
+.row
+    .col-xs-6(ng-repeat="(index, movie) in movies")
+        a.thumbnail.pic-thumb(href="", ng-click="play(index)")
+            img(src="/images/medium_movie_clapper.jpg", alt="Movie")
+            .caption
+                h3 {{movie}}

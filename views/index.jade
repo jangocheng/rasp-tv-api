@@ -4,9 +4,24 @@ html
         title= title
         meta(name="viewport", content="width=device-width, initial-scale=1.0")
         link(href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css", rel="stylesheet")
-        //- link(href="/styles/styles.css", rel="stylesheet")
+        link(href="/styles/styles.css", rel="stylesheet")
     body
-        .container
-            .row
+        .container(ng-app="raspTv")
+            .row(ng-controller="navCtrl")
                 .col-xs-12
-                    h1= title
+                    ul.nav.nav-pills.nav-justified
+                        li(ng-class="isActive('movies')")
+                            a(href="#/") Movies
+                        li(ng-class="isActive('shows')")
+                            a(href="#/shows") TV Shows
+            .row.error-message(ng-controller="errorCtrl", ng-show="error")
+                .col-xs-12
+                    .alert.alert-danger.alert-dismissable
+                        button.close(type="button", ng-click="close()") &times;
+                        strong Error:
+                        |  {{error}}
+            div(ng-view)
+        script(type="text/javascript", src="/js/libs/socket.io.min.js")
+        script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js")
+        script(type="text/javascript", src="/js/libs/socket.js")
+        script(type="text/javascript", src="/js/app.js")
