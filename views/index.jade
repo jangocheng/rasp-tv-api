@@ -14,6 +14,8 @@ html
                             a(href="#/") Movies
                         li(ng-class="isActive('shows')")
                             a(href="#/shows") TV Shows
+                        li(ng-class="isActive('play')", ng-show="isPlaying")
+                            a(href="#/play") Now Playing
             .row.error-message(ng-controller="errorCtrl", ng-show="error")
                 .col-xs-12
                     .alert.alert-danger.alert-dismissable

@@ -11,3 +11,11 @@ body {
 .error-message {
     margin-top: 2%;
 }
+
+.play-controls {
+    text-align: center;
+}
+
+.play-controls button {
+    padding: 4% !important;
+}

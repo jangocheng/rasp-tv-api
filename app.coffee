@@ -3,6 +3,7 @@ path    = require 'path'
 http    = require 'http'
 index   = require './routes'
 api     = require './routes/api'
+player  = require './routes/player'
 
 app = express()
 
@@ -32,5 +33,6 @@ app.post '/movies/play', api.play
 server = http.createServer app
 io = require('socket.io').listen server
 server.listen app.get('port')
+io.sockets.on 'connection', player
 
 console.log 'Listening on port ' + app.get('port')
