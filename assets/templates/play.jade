@@ -3,13 +3,13 @@
         h2 Now Playing: {{playing}}
 .row
     .col-xs-12
-        .play-controls.btn-group.btn-group-justified.btn-group-lg
+        .play-controls.btn-group.btn-group-lg
             button.btn.btn-default(type="button", ng-click="backward()")
                 span.glyphicon.glyphicon-backward
-            button.btn.btn-default(type="button", ng-click="play()")
-                span.glyphicon.glyphicon-play
-            button.btn.btn-default(type="button", ng-click="pause()")
-                span.glyphicon.glyphicon-pause
+            button.btn.btn-default(type="button", ng-click="stop()")
+                span.glyphicon.glyphicon-stop
+            button.btn.btn-default(type="button", ng-click="toggle()")
+                span.glyphicon(ng-class="{'glyphicon-pause' : !isPaused, 'glyphicon-play' : isPaused}")
             button.btn.btn-default(type="button", ng-click="forward()")
                 span.glyphicon.glyphicon-forward
 

@@ -51,11 +51,15 @@ module.exports = (grunt) ->
                     dest : '/home/joe/rasp-tv/'
                     host : 'joe@rpi'
                     syncDestIgnoreExcl: true
+        shell :
+            deploy :
+                command : "ssh joe@rpi 'cd rasp-tv && make restart'"
 
     grunt.loadNpmTasks 'grunt-contrib-coffee'
     grunt.loadNpmTasks 'grunt-contrib-clean'
     grunt.loadNpmTasks 'grunt-contrib-watch'
     grunt.loadNpmTasks 'grunt-contrib-jade'
     grunt.loadNpmTasks 'grunt-rsync'
+    grunt.loadNpmTasks 'grunt-shell'
     grunt.registerTask 'default', ['coffee:client', 'jade']
-    grunt.registerTask 'deploy', ['clean', 'coffee', 'jade', 'rsync', 'clean']
+    grunt.registerTask 'deploy', ['clean', 'coffee', 'jade', 'rsync', 'shell:deploy', 'clean']
