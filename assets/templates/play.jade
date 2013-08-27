@@ -1,6 +1,7 @@
 .row
     .col-xs-12
-        h2 Now Playing: {{playing}}
+        h2(ng-hide="isShow") Now Playing: {{playing}}
+        h2(ng-show="isShow") {{playing.show}} - Season {{playing.season}} - {{playing.episode}}
 .row
     .col-xs-12
         .play-controls.btn-group.btn-group-lg

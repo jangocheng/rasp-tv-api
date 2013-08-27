@@ -1,4 +1,4 @@
-raspTv = angular.module 'raspTv', ['btford.socket-io', 'LocalStorageModule']
+raspTv = angular.module 'raspTv', ['raspTv.services']
 
 raspTv.config ['$routeProvider', ($routeProvider) ->
     $routeProvider.when '/',
@@ -10,19 +10,23 @@ raspTv.config ['$routeProvider', ($routeProvider) ->
     $routeProvider.when '/shows',
         templateUrl : '/templates/shows.html'
         controller : 'showsCtrl'
+    $routeProvider.when '/shows/seasons',
+        templateUrl : '/templates/seasons.html'
+        controller : 'seasonsCtrl'
+    $routeProvider.when '/shows/seasons/episodes',
+        templateUrl : '/templates/episodes.html'
+        controller : 'episodesCtrl'
 ]
 
-raspTv.run ['$rootScope', 'localStorageService', ($rootScope, localStorageService) ->
-    $rootScope.playing = localStorageService.get 'playing'
-    $rootScope.isPlaying = if localStorageService.get('isPlaying') is 'true' then true else false
-    $rootScope.isPaused = if localStorageService.get('isPaused') is 'true' then true else false
+raspTv.run ['player', (player) ->
+    player.checkCache()
 ]
 
 raspTv.controller 'navCtrl', ['$scope', '$location', ($scope, $location) ->
     $scope.isActive = (page) ->
         if page is 'movies' and $location.path() is '/'
             'active'
-        else if page is 'shows' and $location.path() is '/shows'
+        else if page is 'shows' and /^\/shows.*/.test($location.path())
             'active'
         else if page is 'play' and $location.path() is '/play'
             'active'
@@ -35,45 +39,88 @@ raspTv.controller 'errorCtrl', ['$scope', ($scope) ->
         $scope.error = null
 ]
 
-raspTv.controller 'movieCtrl', ['$scope', '$http', '$rootScope', '$location', 'localStorageService', ($scope, $http, $rootScope, $location, localStorageService) ->
-    req = $http.get '/movies'
-    req.success (data) ->
-        $scope.movies = data.movies
-    req.error (err) ->
-        $rootScope.error = err.msg
+raspTv.controller 'movieCtrl', ['$scope', 'movies', '$rootScope', '$location', 'player', ($scope, movies, $rootScope, $location, player) ->
+    movies.getAll (err, movies) ->
+        if err?
+            $rootScope.error = err.msg
+        else
+            $scope.movies = movies
 
     $scope.play = (index) ->
-        req = $http.post '/movies/play',
-            movie : $scope.movies[index]
-        req.success () ->
-            $rootScope.playing = $scope.movies[index]
-            localStorageService.set 'playing', $rootScope.playing
-            $rootScope.isPlaying = true
-            localStorageService.set 'isPlaying', $rootScope.isPlaying
-            $rootScope.isPaused = false
-            localStorageService.set 'isPaused', $rootScope.isPaused
-            $location.path 'play'
-        req.error (err) ->
-            $rootScope.error = err.msg
+        player.playMovie $scope.movies[index], (err) ->
+            if err?
+                $rootScope.error = err.msg
+            else
+                $location.path 'play'
 ]
 
-raspTv.controller 'playCtrl', ['$scope', '$location', 'socket', '$rootScope', 'localStorageService', ($scope, $location, socket, $rootScope, localStorageService) ->
+raspTv.controller 'playCtrl', ['$scope', '$location', 'player', '$rootScope', ($scope, $location, player, $rootScope) ->
+    $scope.isPlaying = player.isPlaying()
     $location.path('/') if not $scope.isPlaying
 
+    $scope.playing = player.getNowPlaying()
+    $scope.isShow = angular.isObject $scope.playing
+    $scope.isPaused = player.isPaused()
+
     $scope.toggle = () ->
-        socket.emit 'toggle'
-        $scope.isPaused = not $scope.isPaused
-        localStorageService.set 'isPaused', $scope.isPaused
-    $scope.backward = () ->
-        socket.emit 'backward'
-    $scope.forward = () ->
-        socket.emit 'forward'
+        player.toggle()
+        $scope.isPaused = player.isPaused()
+    $scope.backward = player.backward
+    $scope.forward = player.forward
     $scope.stop = () ->
-        socket.emit 'stop'
-        $rootScope.isPlaying = false
-        localStorageService.clearAll()
+        player.stop()
         $location.path '/'
 ]
 
-raspTv.controller 'showsCtrl', ['$scope', ($scope) ->
+raspTv.controller 'showsCtrl', ['$scope', 'shows', '$rootScope', '$location', ($scope, shows, $rootScope, $location) ->
+    shows.getAll (err, shows) ->
+        if err?
+            $rootScope.error = err.msg
+        else
+            $scope.shows = shows
+
+    $scope.showSeasons = (index) ->
+        shows.setShow $scope.shows[index]
+        $location.path 'shows/seasons'
+
+]
+
+raspTv.controller 'seasonsCtrl', ['$scope', '$rootScope', '$location', 'shows', ($scope, $rootScope, $location, shows) ->
+    $location.path('shows') if shows.getShow().length is 0
+
+    $scope.show = shows.getShow()
+
+    shows.getSeasons (err, seasons) ->
+        if err?
+            $rootScope.error = err.msg
+        else
+            $scope.seasons = seasons
+
+    $scope.showEpisodes = (season) ->
+        shows.setSeason season
+        $location.path 'shows/seasons/episodes'
+]
+
+raspTv.controller 'episodesCtrl', ['$scope', '$rootScope', '$location', 'shows', 'player', ($scope, $rootScope, $location, shows, player) ->
+    if shows.getSeason().length is 0
+        $location.path 'shows/seasons'
+    else if shows.getShow().length is 0
+        $location.path 'shows'
+
+    $scope.show = shows.getShow()
+    $scope.season = shows.getSeason()
+
+    shows.getEpisodes (err, episodes) ->
+        if err?
+            $rootScope.error = err.msg
+        else
+            $scope.episodes = episodes
+
+    $scope.play = (episode) ->
+        player.playShow $scope.show, $scope.season, episode, (err) ->
+            if err?
+                $rootScope.error = err.msg
+            else
+                shows.setEpisode episode.name
+                $location.path 'play'
 ]

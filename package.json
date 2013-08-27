@@ -6,7 +6,8 @@
   "dependencies": {
     "express": "~3.3.5",
     "jade": "~0.34.1",
-    "socket.io": "~0.9.16"
+    "socket.io": "~0.9.16",
+    "async": "~0.2.9"
   },
   "devDependencies": {
     "grunt-contrib-coffee": "~0.7.0",

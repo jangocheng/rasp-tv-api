@@ -5,11 +5,13 @@ module.exports = (grunt) ->
             client :
                 files :
                     'assets/js/app.js' : 'assets/js/app.coffee'
+                    'assets/js/services.js' : 'assets/js/services.coffee'
             node :
                 files :
                     'app.js' : 'app.coffee'
                     'routes/index.js' : 'routes/index.coffee'
-                    'routes/api.js' : 'routes/api.coffee'
+                    'routes/movies.js' : 'routes/movies.coffee'
+                    'routes/shows.js' : 'routes/shows.coffee'
                     'routes/player.js' : 'routes/player.coffee'
         clean : ['app.js', 'routes/*.js', 'assets/js/*.js', 'assets/templates/*.html', 'dist']
         watch :
@@ -25,6 +27,8 @@ module.exports = (grunt) ->
                     'assets/templates/movies.html' : 'assets/templates/movies.jade'
                     'assets/templates/play.html' : 'assets/templates/play.jade'
                     'assets/templates/shows.html' : 'assets/templates/shows.jade'
+                    'assets/templates/seasons.html' : 'assets/templates/seasons.jade'
+                    'assets/templates/episodes.html' : 'assets/templates/episodes.jade'
         rsync :
             options :
                 args : ['--verbose']
@@ -62,4 +66,4 @@ module.exports = (grunt) ->
     grunt.loadNpmTasks 'grunt-rsync'
     grunt.loadNpmTasks 'grunt-shell'
     grunt.registerTask 'default', ['coffee:client', 'jade']
-    grunt.registerTask 'deploy', ['clean', 'coffee', 'jade', 'rsync', 'shell:deploy', 'clean']
+    grunt.registerTask 'deploy', ['clean', 'coffee', 'jade', 'rsync', 'clean']

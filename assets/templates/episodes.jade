@@ -1,0 +1,8 @@
+.row
+    .col-xs-12
+        h2 {{show}} - Season {{season}}
+.row
+    .col-xs-12
+        ul.list-group
+            a.list-group-item(ng-click="play(episode)", ng-repeat="episode in episodes", href="")
+                | {{episode.num}} - {{episode.name}}

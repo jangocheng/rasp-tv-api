@@ -2,13 +2,14 @@ express = require 'express'
 path    = require 'path'
 http    = require 'http'
 index   = require './routes'
-api     = require './routes/api'
+movies  = require './routes/movies'
+shows   = require './routes/shows'
 player  = require './routes/player'
 
 app = express()
 
 errorHandler = (err, req, res, next) ->
-	console.error err
+	console.error require('util').inspect(err)
 	res.send 500,
 		msg : err.message
 
@@ -27,8 +28,12 @@ app.use errorHandler
 app.use pageNotFound
 
 app.get '/', index.index
-app.get '/movies', api.movies
-app.post '/movies/play', api.play
+app.get '/movies', movies.index
+app.post '/movies/play', movies.play
+app.get '/shows', shows.index
+app.post '/shows/seasons', shows.seasons
+app.post '/shows/seasons/episodes', shows.episodes
+app.post '/shows/play', shows.play
 
 server = http.createServer app
 io = require('socket.io').listen server

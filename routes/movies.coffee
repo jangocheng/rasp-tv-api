@@ -1,18 +1,24 @@
-fs   = require 'fs'
-path = require 'path'
-omx  = require './lib/omxcontrol'
+fs    = require 'fs'
+path  = require 'path'
+async = require 'async'
+omx   = require './lib/omxcontrol'
 
 moviesDir = '/media/passport/Movies'
-# moviesDir = '/Users/Joe/Movies/Test'
-showsDir  = '/media/passport/TV Shows'
+# moviesDir = '/Volumes/My Passport/Movies'
 
-exports.movies = (req, res, next) ->
+exports.index = (req, res, next) ->
     fs.readdir moviesDir, (err, files) ->
-        next(err) if err
-        movies = files.filter (file) ->
-            file[0] isnt '.'
-        res.json
-            'movies' : movies.sort()
+        next(err) if err?
+        async.filter files, ((file, cb) ->
+            if file[0] is '.'
+                cb false
+            else
+                fs.stat path.join(moviesDir, file), (err, stats) ->
+                    cb(false) if err?
+                    cb stats.isDirectory()
+        ), (results) ->
+            res.json
+                movies : results.sort()
 
 exports.play = (req, res, next) ->
     moviePath = path.join moviesDir, req.body.movie
