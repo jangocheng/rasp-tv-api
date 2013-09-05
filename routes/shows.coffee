@@ -33,7 +33,9 @@ exports.seasons = (req, res, next) ->
                     cb stats.isDirectory()
         ), (results) ->
             res.json
-                seasons : results.sort()
+                seasons : results.map ((value) ->
+                    parseInt value, 10
+                ).sort()
 
 exports.episodes = (req, res, next) ->
     showPath = path.join showsDir, req.body.show, '' + req.body.season
@@ -58,7 +60,6 @@ exports.play = (req, res, next) ->
         if exists
             omx.quit()
             omx.start episodePath
-            # console.log 'Show playing from ' + episodePath
         else
             next(new Error 'TV Show episode not found')
         res.send 200

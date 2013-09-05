@@ -48,8 +48,8 @@ omx.start = function(fn) {
 
     function cb(fn) {
         console.log(fn);
-        exec('omxplayer -o hdmi -b "'+fn+'" < '+pipe,function(error, stdout, stderr) {
-            console.log(stdout);
+        exec('omxplayer -o hdmi -b "'+fn+'" < '+pipe, function(error, stdout, stderr) {
+            console.log('Playing ' + stdout);
         });
         exec('echo . > '+pipe);
     }

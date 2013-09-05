@@ -29,7 +29,6 @@ exports.play = (req, res, next) ->
         if movieFiles.length > 0
             omx.quit()
             omx.start path.join(moviePath, movieFiles[0])
-            # console.log 'Movie playing from ' + path.join moviePath, movieFiles[0]
         else
             next(new Error 'Movie file not found')
         res.send 200

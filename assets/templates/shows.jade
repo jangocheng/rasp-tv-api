@@ -1,6 +1,9 @@
 .row
-    .col-xs-6(ng-repeat="(index, show) in shows")
-        a.thumbnail.pic-thumb(href="", ng-click="showSeasons(index)")
-            img(src="/images/television.jpg", alt="Television")
-            .caption
-                h3 {{show}}
+    .col-xs-12
+        input.form-control(type="text", ng-model="title", placeholder="Search")
+br
+.row
+    .col-xs-12
+        ul.list-group
+            a.list-group-item(href="", ng-click="showSeasons(index)", ng-repeat="(index, show) in shows | filter:title")
+                | {{show}}
