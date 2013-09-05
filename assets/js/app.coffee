@@ -46,8 +46,8 @@ raspTv.controller 'movieCtrl', ['$scope', 'movies', '$rootScope', '$location', '
         else
             $scope.movies = movies
 
-    $scope.play = (index) ->
-        player.playMovie $scope.movies[index], (err) ->
+    $scope.play = (movie) ->
+        player.playMovie movie, (err) ->
             if err?
                 $rootScope.error = err.msg
             else
@@ -69,7 +69,7 @@ raspTv.controller 'playCtrl', ['$scope', '$location', 'player', '$rootScope', ($
     $scope.forward = player.forward
     $scope.stop = () ->
         player.stop()
-        $location.path '/'
+        if $scope.isShow then $location.path('/shows') else $location.path('/')
 ]
 
 raspTv.controller 'showsCtrl', ['$scope', 'shows', '$rootScope', '$location', ($scope, shows, $rootScope, $location) ->
@@ -79,8 +79,8 @@ raspTv.controller 'showsCtrl', ['$scope', 'shows', '$rootScope', '$location', ($
         else
             $scope.shows = shows
 
-    $scope.showSeasons = (index) ->
-        shows.setShow $scope.shows[index]
+    $scope.showSeasons = (show) ->
+        shows.setShow show
         $location.path 'shows/seasons'
 
 ]
@@ -123,4 +123,14 @@ raspTv.controller 'episodesCtrl', ['$scope', '$rootScope', '$location', 'shows',
             else
                 shows.setEpisode episode.name
                 $location.path 'play'
+]
+
+raspTv.controller 'shutdownCtrl', ['$scope', '$http', 'player', '$rootScope', ($scope, $http, player) ->
+    $scope.shutdown = () ->
+        if window.confirm('Shutdown?')
+            player.stop()
+            req = $http.post '/shutdown'
+            req.error (err) ->
+                $rootScope.error = err.msg
+
 ]

@@ -5,5 +5,5 @@ br
 .row
     .col-xs-12
         ul.list-group
-            a.list-group-item(href="", ng-click="play(index)", ng-repeat="(index, movie) in movies | filter:title")
+            a.list-group-item(href="", ng-click="play(movie)", ng-repeat="movie in movies | filter:title")
                 | {{movie}}

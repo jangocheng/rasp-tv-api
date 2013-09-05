@@ -13,6 +13,7 @@ module.exports = (grunt) ->
                     'routes/movies.js' : 'routes/movies.coffee'
                     'routes/shows.js' : 'routes/shows.coffee'
                     'routes/player.js' : 'routes/player.coffee'
+                    'routes/shutdown.js' : 'routes/shutdown.coffee'
         clean : ['app.js', 'routes/*.js', 'assets/js/*.js', 'assets/templates/*.html', 'dist']
         watch :
             coffee :

@@ -5,5 +5,5 @@ br
 .row
     .col-xs-12
         ul.list-group
-            a.list-group-item(href="", ng-click="showSeasons(index)", ng-repeat="(index, show) in shows | filter:title")
+            a.list-group-item(href="", ng-click="showSeasons(show)", ng-repeat="show in shows | filter:title")
                 | {{show}}

@@ -33,9 +33,7 @@ exports.seasons = (req, res, next) ->
                     cb stats.isDirectory()
         ), (results) ->
             res.json
-                seasons : results.map ((value) ->
-                    parseInt value, 10
-                ).sort()
+                seasons : results.sort()
 
 exports.episodes = (req, res, next) ->
     showPath = path.join showsDir, req.body.show, '' + req.body.season

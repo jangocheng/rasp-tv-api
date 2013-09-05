@@ -1,15 +1,16 @@
-express = require 'express'
-path    = require 'path'
-http    = require 'http'
-index   = require './routes'
-movies  = require './routes/movies'
-shows   = require './routes/shows'
-player  = require './routes/player'
+express  = require 'express'
+path     = require 'path'
+http     = require 'http'
+index    = require './routes'
+movies   = require './routes/movies'
+shows    = require './routes/shows'
+player   = require './routes/player'
+shutdown = require './routes/shutdown'
 
 app = express()
 
 errorHandler = (err, req, res, next) ->
-	console.error require('util').inspect(err)
+	console.error err
 	res.send 500,
 		msg : err.message
 
@@ -34,6 +35,7 @@ app.get '/shows', shows.index
 app.post '/shows/seasons', shows.seasons
 app.post '/shows/seasons/episodes', shows.episodes
 app.post '/shows/play', shows.play
+app.post '/shutdown', shutdown
 
 server = http.createServer app
 io = require('socket.io').listen server
