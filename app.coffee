@@ -36,6 +36,7 @@ app.post '/shows/seasons', shows.seasons
 app.post '/shows/seasons/episodes', shows.episodes
 app.post '/shows/play', shows.play
 app.post '/shutdown', shutdown
+app.post '/shows/random', shows.random
 
 server = http.createServer app
 io = require('socket.io').listen server

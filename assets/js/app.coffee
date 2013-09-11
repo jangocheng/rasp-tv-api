@@ -41,17 +41,11 @@ raspTv.controller 'errorCtrl', ['$scope', ($scope) ->
 
 raspTv.controller 'movieCtrl', ['$scope', 'movies', '$rootScope', '$location', 'player', ($scope, movies, $rootScope, $location, player) ->
     movies.getAll (err, movies) ->
-        if err?
-            $rootScope.error = err.msg
-        else
-            $scope.movies = movies
+        if err? then $rootScope.error = err.msg else $scope.movies = movies
 
     $scope.play = (movie) ->
         player.playMovie movie, (err) ->
-            if err?
-                $rootScope.error = err.msg
-            else
-                $location.path 'play'
+            if err? then $rootScope.error = err.msg else $location.path 'play'
 ]
 
 raspTv.controller 'playCtrl', ['$scope', '$location', 'player', '$rootScope', ($scope, $location, player, $rootScope) ->
@@ -74,31 +68,28 @@ raspTv.controller 'playCtrl', ['$scope', '$location', 'player', '$rootScope', ($
 
 raspTv.controller 'showsCtrl', ['$scope', 'shows', '$rootScope', '$location', ($scope, shows, $rootScope, $location) ->
     shows.getAll (err, shows) ->
-        if err?
-            $rootScope.error = err.msg
-        else
-            $scope.shows = shows
+        if err? then $rootScope.error = err.msg else $scope.shows = shows
 
     $scope.showSeasons = (show) ->
         shows.setShow show
         $location.path 'shows/seasons'
-
 ]
 
-raspTv.controller 'seasonsCtrl', ['$scope', '$rootScope', '$location', 'shows', ($scope, $rootScope, $location, shows) ->
+raspTv.controller 'seasonsCtrl', ['$scope', '$rootScope', '$location', 'shows', 'player', ($scope, $rootScope, $location, shows, player) ->
     $location.path('shows') if shows.getShow().length is 0
 
     $scope.show = shows.getShow()
 
     shows.getSeasons (err, seasons) ->
-        if err?
-            $rootScope.error = err.msg
-        else
-            $scope.seasons = seasons
+        if err? then $rootScope.error = err.msg else $scope.seasons = seasons
 
     $scope.showEpisodes = (season) ->
         shows.setSeason season
         $location.path 'shows/seasons/episodes'
+
+    $scope.random = () ->
+        player.playRandomEpisode $scope.show, (err) ->
+            if err? then $rootScope.error = err.msg else $location.path('play')
 ]
 
 raspTv.controller 'episodesCtrl', ['$scope', '$rootScope', '$location', 'shows', 'player', ($scope, $rootScope, $location, shows, player) ->
@@ -111,12 +102,18 @@ raspTv.controller 'episodesCtrl', ['$scope', '$rootScope', '$location', 'shows',
     $scope.season = shows.getSeason()
 
     shows.getEpisodes (err, episodes) ->
-        if err?
-            $rootScope.error = err.msg
-        else
-            $scope.episodes = episodes
+        if err? then $rootScope.error = err.msg else $scope.episodes = episodes
 
     $scope.play = (episode) ->
+        player.playShow $scope.show, $scope.season, episode, (err) ->
+            if err?
+                $rootScope.error = err.msg
+            else
+                shows.setEpisode episode.name
+                $location.path 'play'
+
+    $scope.random = () ->
+        episode = $scope.episodes[Math.floor(Math.random() * $scope.episodes.length)]
         player.playShow $scope.show, $scope.season, episode, (err) ->
             if err?
                 $rootScope.error = err.msg

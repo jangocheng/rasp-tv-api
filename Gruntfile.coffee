@@ -67,4 +67,4 @@ module.exports = (grunt) ->
     grunt.loadNpmTasks 'grunt-rsync'
     grunt.loadNpmTasks 'grunt-shell'
     grunt.registerTask 'default', ['coffee:client', 'jade']
-    grunt.registerTask 'deploy', ['clean', 'coffee', 'jade', 'rsync', 'shell:restart', 'clean']
+    grunt.registerTask 'deploy', ['clean', 'coffee', 'jade', 'rsync', 'clean']

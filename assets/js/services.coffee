@@ -76,6 +76,7 @@ services.factory 'shows', ['$http', ($http) ->
     api.setSeason = setSeason
     api.getShow = getShow
     api.setShow = setShow
+
     return api
 ]
 
@@ -135,6 +136,20 @@ services.factory 'player', ['$rootScope', '$http', 'localStorageService', 'socke
         req.error (err) ->
             cb err
 
+    api.playRandomEpisode = (show, cb) ->
+        req = $http.post '/shows/random', {'show' : show}
+        req.success (data) ->
+            showProps = data
+            showProps.show = show
+            matches = /^\d+\s-\s(.+)\.\w+$/.exec showProps.episode
+            showProps.episode = matches[1]
+            setNowPlaying showProps
+            setIsPlaying true
+            setIsPaused false
+            cb()
+        req.error (err) ->
+            cb err
+
     api.toggle = () ->
         socket.emit 'toggle'
         setIsPaused not isPaused
@@ -153,5 +168,6 @@ services.factory 'player', ['$rootScope', '$http', 'localStorageService', 'socke
     api.setIsPaused = setIsPaused
     api.isPlaying = getIsPlaying
     api.setIsPlaying = setIsPlaying
+
     return api
 ]
