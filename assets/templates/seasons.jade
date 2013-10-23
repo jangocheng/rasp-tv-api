@@ -6,6 +6,7 @@
 br
 .row
     .col-xs-12
-        ul.list-group
+        p(ng-hide="seasons") Loading...
+        ul.list-group(ng-show="seasons")
             a.list-group-item(ng-click="showEpisodes(season)", ng-repeat="season in seasons", href="")
                 | Season {{season}}

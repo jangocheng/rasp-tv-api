@@ -12,3 +12,9 @@ module.exports = (socket) ->
 
     socket.on 'stop', (data) ->
         omx.quit()
+
+    socket.on 'fastBackward', (data) ->
+        omx.fastBackward()
+
+    socket.on 'fastForward', (data) ->
+        omx.fastForward()

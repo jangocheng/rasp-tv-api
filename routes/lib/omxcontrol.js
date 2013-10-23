@@ -77,5 +77,7 @@ omx.mapKey('quit','q',function() {
 omx.mapKey('play','.');
 omx.mapKey('forward',"\x5b\x43");
 omx.mapKey('backward',"\x5b\x44");
+omx.mapKey('fastBackward', "\x5b\x42");
+omx.mapKey('fastForward', "\x5b\x41");
 
 module.exports = omx;

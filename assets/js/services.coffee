@@ -161,6 +161,10 @@ services.factory 'player', ['$rootScope', '$http', 'localStorageService', 'socke
         socket.emit 'stop'
         setIsPlaying false
         localStorageService.clearAll()
+    api.fastBackward = () ->
+        socket.emit 'fastBackward'
+    api.fastForward = () ->
+        socket.emit 'fastForward'
 
     api.setNowPlaying = setNowPlaying
     api.getNowPlaying = getNowPlaying

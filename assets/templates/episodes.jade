@@ -6,6 +6,7 @@
 br
 .row
     .col-xs-12
-        ul.list-group
+        p(ng-hide="episodes") Loading...
+        ul.list-group(ng-show="episodes")
             a.list-group-item(ng-click="play(episode)", ng-repeat="episode in episodes", href="")
                 | {{episode.num}} - {{episode.name}}

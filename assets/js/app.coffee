@@ -61,6 +61,8 @@ raspTv.controller 'playCtrl', ['$scope', '$location', 'player', '$rootScope', ($
         $scope.isPaused = player.isPaused()
     $scope.backward = player.backward
     $scope.forward = player.forward
+    $scope.fastBackward = player.fastBackward
+    $scope.fastForward = player.fastForward
     $scope.stop = () ->
         player.stop()
         if $scope.isShow then $location.path('/shows') else $location.path('/')

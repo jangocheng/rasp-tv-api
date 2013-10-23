@@ -5,6 +5,8 @@
 .row
     .col-xs-12
         .play-controls.btn-group.btn-group-lg
+            button.btn.btn-default(type="button", ng-click="fastBackward()")
+                span.glyphicon.glyphicon-fast-backward
             button.btn.btn-default(type="button", ng-click="backward()")
                 span.glyphicon.glyphicon-backward
             button.btn.btn-default(type="button", ng-click="stop()")
@@ -13,4 +15,6 @@
                 span.glyphicon(ng-class="{'glyphicon-pause' : !isPaused, 'glyphicon-play' : isPaused}")
             button.btn.btn-default(type="button", ng-click="forward()")
                 span.glyphicon.glyphicon-forward
+            button.btn.btn-default(type="button", ng-click="fastForward()")
+                span.glyphicon.glyphicon-fast-forward
 
