@@ -6,6 +6,7 @@ movies   = require './routes/movies'
 shows    = require './routes/shows'
 player   = require './routes/player'
 shutdown = require './routes/shutdown'
+# youtube  = require './routes/youtube'
 
 app = express()
 
@@ -37,6 +38,7 @@ app.post '/shows/seasons/episodes', shows.episodes
 app.post '/shows/play', shows.play
 app.post '/shutdown', shutdown
 app.post '/shows/random', shows.random
+# app.post '/youtube', youtube
 
 server = http.createServer app
 io = require('socket.io').listen server

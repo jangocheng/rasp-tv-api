@@ -1,0 +1,8 @@
+.row
+    .col-xs-12
+        input.form-control(type="text", ng-model="url", placeholder="YouTube URL")
+        br
+        .progress(ng-show="isDownloading")
+            .progress-bar(ng-style="progress")
+        button.btn.btn-primary.btn-lg.btn-block(ng-click="play()")
+            | Download

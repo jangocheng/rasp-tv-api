@@ -14,6 +14,7 @@ module.exports = (grunt) ->
                     'routes/shows.js' : 'routes/shows.coffee'
                     'routes/player.js' : 'routes/player.coffee'
                     'routes/shutdown.js' : 'routes/shutdown.coffee'
+                    'routes/youtube.js' : 'routes/youtube.coffee'
         clean : ['app.js', 'routes/*.js', 'assets/js/*.js', 'assets/templates/*.html', 'dist']
         watch :
             coffee :
@@ -30,6 +31,7 @@ module.exports = (grunt) ->
                     'assets/templates/shows.html' : 'assets/templates/shows.jade'
                     'assets/templates/seasons.html' : 'assets/templates/seasons.jade'
                     'assets/templates/episodes.html' : 'assets/templates/episodes.jade'
+                    'assets/templates/youtube.html' : 'assets/templates/youtube.jade'
         rsync :
             options :
                 args : ['--verbose']

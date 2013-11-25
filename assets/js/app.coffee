@@ -16,6 +16,9 @@ raspTv.config ['$routeProvider', ($routeProvider) ->
     $routeProvider.when '/shows/seasons/episodes',
         templateUrl : '/templates/episodes.html'
         controller : 'episodesCtrl'
+    $routeProvider.when '/youtube',
+        templateUrl : '/templates/youtube.html'
+        controller : 'youtubeCtrl'
 ]
 
 raspTv.run ['player', (player) ->
@@ -29,6 +32,8 @@ raspTv.controller 'navCtrl', ['$scope', '$location', ($scope, $location) ->
         else if page is 'shows' and /^\/shows.*/.test($location.path())
             'active'
         else if page is 'play' and $location.path() is '/play'
+            'active'
+        else if page is 'youtube' and $location.path() is '/youtube'
             'active'
         else
             ''
@@ -124,12 +129,26 @@ raspTv.controller 'episodesCtrl', ['$scope', '$rootScope', '$location', 'shows',
                 $location.path 'play'
 ]
 
-raspTv.controller 'shutdownCtrl', ['$scope', '$http', 'player', '$rootScope', ($scope, $http, player) ->
+raspTv.controller 'shutdownCtrl', ['$scope', '$http', 'player', '$rootScope', ($scope, $http, player, $rootScope) ->
     $scope.shutdown = () ->
         if window.confirm('Shutdown?')
             player.stop()
             req = $http.post '/shutdown'
             req.error (err) ->
                 $rootScope.error = err.msg
+]
 
+raspTv.controller 'youtubeCtrl', ['$scope', 'player', '$rootScope', '$location', ($scope, player, $rootScope, $location) ->
+    $scope.isDownloading = false
+    $scope.play = () ->
+        $scope.isDownloading = true
+        player.playYoutube $scope.url, (err) ->
+            $scope.isDownloading = false
+            if err?
+                $rootScope.error = err.msg
+            else
+                $location.path 'play'
+
+        $scope.$on 'progress', (event, progress) ->
+            $scope.progress = {width : "#{progress}%"}
 ]
