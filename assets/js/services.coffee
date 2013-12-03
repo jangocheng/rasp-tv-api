@@ -84,7 +84,6 @@ services.factory 'player', ['$rootScope', '$http', 'localStorageService', 'socke
     nowPlaying = ''
     isPaused   = false
     isPlaying  = false
-    downloadProgress = 0
 
     # Getters and setters
     setNowPlaying = (video) ->
@@ -151,7 +150,18 @@ services.factory 'player', ['$rootScope', '$http', 'localStorageService', 'socke
         req.error (err) ->
             cb err
 
-    api.playYoutube = (url, cb) ->
+    api.playYoutube = (video, cb) ->
+        req = $http.post '/youtube/play', {'filename' : video.filename}
+        req.success () ->
+            setNowPlaying video.title
+            setIsPlaying true
+            setIsPaused false
+            cb()
+        req.error (err) ->
+            cb err
+
+    api.downloadYoutube = (url, cb) ->
+        downloadProgress = 0
         socket.emit 'youtube', {'url', url}
         socket.on 'progress', (data) ->
             downloadProgress = data.percent
@@ -163,7 +173,8 @@ services.factory 'player', ['$rootScope', '$http', 'localStorageService', 'socke
             setIsPaused false
             cb()
         socket.on 'error', (err) ->
-            cb(err)
+            cb err
+
     api.toggle = () ->
         socket.emit 'toggle'
         setIsPaused not isPaused
@@ -186,7 +197,6 @@ services.factory 'player', ['$rootScope', '$http', 'localStorageService', 'socke
     api.setIsPaused = setIsPaused
     api.isPlaying = getIsPlaying
     api.setIsPlaying = setIsPlaying
-    api.downloadProgress = downloadProgress
 
     return api
 ]

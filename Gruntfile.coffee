@@ -15,6 +15,7 @@ module.exports = (grunt) ->
                     'routes/player.js' : 'routes/player.coffee'
                     'routes/shutdown.js' : 'routes/shutdown.coffee'
                     'routes/youtube.js' : 'routes/youtube.coffee'
+                    'routes/config.js' : 'routes/config.coffee'
         clean : ['app.js', 'routes/*.js', 'assets/js/*.js', 'assets/templates/*.html', 'dist']
         watch :
             coffee :
@@ -44,7 +45,8 @@ module.exports = (grunt) ->
                     ".gitignore",
                     "*.coffee",
                     "LICENSE",
-                    "README.md"
+                    "README.md",
+                    "videos"
                 ]
                 recursive : true
             dist :

@@ -1,26 +1,24 @@
-fs    = require 'fs'
-path  = require 'path'
-async = require 'async'
-omx   = require './lib/omxcontrol'
-
-showsDir  = '/media/passport/TV Shows'
-# showsDir = '/Volumes/My Passport/TV Shows'
+fs     = require 'fs'
+path   = require 'path'
+async  = require 'async'
+config = require './config'
+omx    = require './lib/omxcontrol'
 
 getShows = (callback) ->
-    fs.readdir showsDir, (err, files) ->
+    fs.readdir config.showsDir, (err, files) ->
         callback(err, null) if err?
         async.filter files, ((file, cb) ->
             if file[0] is '.'
                 cb false
             else
-                fs.stat path.join(showsDir, file), (err, stats) ->
+                fs.stat path.join(config.showsDir, file), (err, stats) ->
                     cb(false) if err?
                     cb stats.isDirectory()
         ), (results) ->
             callback null, results.sort()
 
 getSeasons = (show, callback) ->
-    showPath = path.join showsDir, show
+    showPath = path.join config.showsDir, show
     fs.readdir showPath, (err, files) ->
         callback(err, null) if err?
         async.filter files, ((file, cb) ->
@@ -34,7 +32,7 @@ getSeasons = (show, callback) ->
             callback null, results.sort()
 
 getEpisodes = (show, season, callback) ->
-    showPath = path.join showsDir, show, '' + season
+    showPath = path.join config.showsDir, show, '' + season
     fs.readdir showPath, (err, files) ->
         callback(err, null) if err?
         episodes = files.filter (file) ->
@@ -50,7 +48,7 @@ getEpisodes = (show, season, callback) ->
             return 0
 
 play = (show, season, episode, callback) ->
-    episodePath = path.join showsDir, show, '' + season, episode
+    episodePath = path.join config.showsDir, show, '' + season, episode
     fs.exists episodePath, (exists) ->
         if exists
             omx.quit()

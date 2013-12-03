@@ -1,5 +1,6 @@
 omx     = require './lib/omxcontrol'
 path    = require 'path'
+config  = require './config'
 youtube = require 'youtube-dl'
 
 module.exports = (socket) ->
@@ -22,16 +23,13 @@ module.exports = (socket) ->
         omx.fastForward()
 
     socket.on 'youtube', (data) ->
-        youtubeDir = '/media/passport/youtube'
-        youtube.getInfo data.url, (err, info) ->
-            throw err if err?
-            download = youtube.download data.url, youtubeDir
-            download.on 'progress', (data) ->
-                socket.emit 'progress', {percent : data.percent}
-            download.on 'end', (data) ->
-                omx.quit()
-                omx.start path.join(youtubeDir, data.filename)
-                socket.emit 'end',
-                    title : info.title
-            download.on 'error', (err) ->
-                socket.emit 'error', err
+        download = youtube.download data.url, config.youtubeDir
+        download.on 'progress', (data) ->
+            socket.emit 'progress', {percent : data.percent}
+        download.on 'end', (data) ->
+            omx.quit()
+            omx.start path.join(config.youtubeDir, data.filename)
+            socket.emit 'end',
+                title : data.filename.substr 0, data.filename.indexOf(data.id) - 1
+        download.on 'error', (err) ->
+            socket.emit 'error', err

@@ -1,4 +1,4 @@
-raspTv = angular.module 'raspTv', ['raspTv.services']
+raspTv = angular.module 'raspTv', ['ngRoute', 'raspTv.services']
 
 raspTv.config ['$routeProvider', ($routeProvider) ->
     $routeProvider.when '/',
@@ -64,10 +64,12 @@ raspTv.controller 'playCtrl', ['$scope', '$location', 'player', '$rootScope', ($
     $scope.toggle = () ->
         player.toggle()
         $scope.isPaused = player.isPaused()
+
     $scope.backward = player.backward
     $scope.forward = player.forward
     $scope.fastBackward = player.fastBackward
     $scope.fastForward = player.fastForward
+
     $scope.stop = () ->
         player.stop()
         if $scope.isShow then $location.path('/shows') else $location.path('/')
@@ -138,16 +140,30 @@ raspTv.controller 'shutdownCtrl', ['$scope', '$http', 'player', '$rootScope', ($
                 $rootScope.error = err.msg
 ]
 
-raspTv.controller 'youtubeCtrl', ['$scope', 'player', '$rootScope', '$location', ($scope, player, $rootScope, $location) ->
+raspTv.controller 'youtubeCtrl', ['$scope', 'player', '$rootScope', '$location', '$timeout', '$http', ($scope, player, $rootScope, $location, $timeout, $http) ->
     $scope.isDownloading = false
-    $scope.play = () ->
-        $scope.isDownloading = true
-        player.playYoutube $scope.url, (err) ->
-            $scope.isDownloading = false
-            if err?
-                $rootScope.error = err.msg
-            else
-                $location.path 'play'
+    timeout = null;
+
+    req = $http.get '/youtube/videos'
+    req.success (data) ->
+        $scope.videos = data.videos
+    req.error (err) ->
+        $rootScope.error = err.msg
+
+    $scope.play = (video) ->
+        player.playYoutube video, (err) ->
+            if err? then $rootScope.error = err.msg else $location.path 'play'
+
+
+    $scope.download = () ->
+        $scope.isDownloading = false
+        $timeout.cancel timeout
+        timeout = $timeout ( ->
+            $scope.isDownloading = true
+            player.downloadYoutube $scope.url, (err) ->
+                $scope.isDownloading = false
+                if err? then $rootScope.error = err.msg else $location.path 'play'
+        ), 1500
 
         $scope.$on 'progress', (event, progress) ->
             $scope.progress = {width : "#{progress}%"}
