@@ -160,17 +160,18 @@ services.factory 'player', ['$rootScope', '$http', 'localStorageService', 'socke
         req.error (err) ->
             cb err
 
-    api.downloadYoutube = (url, cb) ->
+    api.downloadYoutube = (url, shouldPlay, cb) ->
         downloadProgress = 0
-        socket.emit 'youtube', {'url', url}
+        socket.emit 'youtube', {'url', url, 'shouldPlay' : shouldPlay}
         socket.on 'progress', (data) ->
             downloadProgress = data.percent
             $rootScope.$broadcast 'progress', downloadProgress
         socket.on 'end', (data) ->
             downloadProgress = 0
-            setNowPlaying data.title
-            setIsPlaying true
-            setIsPaused false
+            if shouldPlay
+                setNowPlaying data.title
+                setIsPlaying true
+                setIsPaused false
             cb()
         socket.on 'error', (err) ->
             cb err
@@ -197,6 +198,25 @@ services.factory 'player', ['$rootScope', '$http', 'localStorageService', 'socke
     api.setIsPaused = setIsPaused
     api.isPlaying = getIsPlaying
     api.setIsPlaying = setIsPlaying
+
+    return api
+]
+
+services.factory 'youtube', ['$http', ($http) ->
+
+    videos = []
+    api = {}
+
+    api.getAll = (cb) ->
+        if videos.length is 0
+            req = $http.get '/youtube/videos'
+            req.success (data) ->
+                videos
+                cb null, data.videos
+            req.error (err) ->
+                cb err, null
+        else
+            cb null, videos
 
     return api
 ]

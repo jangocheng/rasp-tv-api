@@ -1,7 +1,12 @@
 .row
-    .col-xs-12
-        input.form-control(type="text", ng-model="url", placeholder="YouTube URL", ng-change="download()", ng-disabled="isDownloading")
-        br
+    .col-xs-10
+        input.form-control(type="text", ng-model="url", placeholder="YouTube URL", ng-change="download()", ng-disabled="isDownloading", required)
+    .col-xs-2
+        .checkbox
+            label
+                input(type="checkbox", ng-model="shouldPlay")
+                | Play
+br
 .row
     .col-xs-12
         .progress.progress-striped.active(ng-show="isDownloading")

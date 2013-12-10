@@ -26,10 +26,11 @@ module.exports = (socket) ->
         download = youtube.download data.url, config.youtubeDir
         download.on 'progress', (data) ->
             socket.emit 'progress', {percent : data.percent}
-        download.on 'end', (data) ->
-            omx.quit()
-            omx.start path.join(config.youtubeDir, data.filename)
+        download.on 'end', (info) ->
+            if data.shouldPlay
+                omx.quit()
+                omx.start path.join(config.youtubeDir, info.filename)
             socket.emit 'end',
-                title : data.filename.substr 0, data.filename.indexOf(data.id) - 1
+                title : info.filename.substr 0, info.filename.indexOf(info.id) - 1
         download.on 'error', (err) ->
             socket.emit 'error', err

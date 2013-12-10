@@ -46,7 +46,8 @@ module.exports = (grunt) ->
                     "*.coffee",
                     "LICENSE",
                     "README.md",
-                    "videos"
+                    "videos",
+                    "omxcontrol"
                 ]
                 recursive : true
             dist :

@@ -140,15 +140,13 @@ raspTv.controller 'shutdownCtrl', ['$scope', '$http', 'player', '$rootScope', ($
                 $rootScope.error = err.msg
 ]
 
-raspTv.controller 'youtubeCtrl', ['$scope', 'player', '$rootScope', '$location', '$timeout', '$http', ($scope, player, $rootScope, $location, $timeout, $http) ->
+raspTv.controller 'youtubeCtrl', ['$scope', 'player', '$rootScope', '$location', '$timeout', 'youtube', ($scope, player, $rootScope, $location, $timeout, youtube) ->
     $scope.isDownloading = false
     timeout = null;
+    $scope.shouldPlay = false
 
-    req = $http.get '/youtube/videos'
-    req.success (data) ->
-        $scope.videos = data.videos
-    req.error (err) ->
-        $rootScope.error = err.msg
+    youtube.getAll (err, videos) ->
+        if err? then $rootScope.error = err.msg else $scope.videos = videos
 
     $scope.play = (video) ->
         player.playYoutube video, (err) ->
@@ -160,9 +158,17 @@ raspTv.controller 'youtubeCtrl', ['$scope', 'player', '$rootScope', '$location',
         $timeout.cancel timeout
         timeout = $timeout ( ->
             $scope.isDownloading = true
-            player.downloadYoutube $scope.url, (err) ->
+            player.downloadYoutube $scope.url, $scope.shouldPlay, (err) ->
                 $scope.isDownloading = false
-                if err? then $rootScope.error = err.msg else $location.path 'play'
+                if err?
+                    $rootScope.error = err.msg
+                else
+                    if $scope.shouldPlay
+                        $location.path 'play'
+                    else
+                        youtube.getAll (err, videos) ->
+                            $scope.url = ''
+                            if err? then $rootScope.error = err.msg else $scope.videos = videos
         ), 1500
 
         $scope.$on 'progress', (event, progress) ->
