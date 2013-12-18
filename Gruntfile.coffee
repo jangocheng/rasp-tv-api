@@ -16,7 +16,7 @@ module.exports = (grunt) ->
                     'routes/shutdown.js' : 'routes/shutdown.coffee'
                     'routes/youtube.js' : 'routes/youtube.coffee'
                     'routes/config.js' : 'routes/config.coffee'
-        clean : ['app.js', 'routes/*.js', 'assets/js/*.js', 'assets/templates/*.html', 'dist']
+        clean : ['app.js', 'routes/*.js', 'assets/js/*.js', 'assets/templates/*.html', 'dist', 'omxcontrol']
         watch :
             coffee :
                 files : ['assets/js/*.coffee']
@@ -59,11 +59,23 @@ module.exports = (grunt) ->
                     args : ['--verbose']
                     src : './dist/'
                     dest : '/home/joe/rasp-tv/'
-                    host : 'joe@rpi'
+                    host : 'joe@192.168.1.115'
                     syncDestIgnoreExcl: true
         shell :
             restart :
                 command : "ssh joe@rpi 'sudo systemctl restart rasptv.service'"
+        uglify :
+            client :
+                files :
+                    'assets/js/rasptv.min.js' : [
+                        'assets/js/libs/socket.io.min.js',
+                        'assets/js/libs/angular.js',
+                        'assets/js/libs/angular-route.js',
+                        'assets/js/libs/socket.js',
+                        'assets/js/libs/localStorageModule.js',
+                        'assets/js/services.js',
+                        'assets/js/app.js'
+                    ]
 
     grunt.loadNpmTasks 'grunt-contrib-coffee'
     grunt.loadNpmTasks 'grunt-contrib-clean'
@@ -71,5 +83,6 @@ module.exports = (grunt) ->
     grunt.loadNpmTasks 'grunt-contrib-jade'
     grunt.loadNpmTasks 'grunt-rsync'
     grunt.loadNpmTasks 'grunt-shell'
+    grunt.loadNpmTasks 'grunt-contrib-uglify'
     grunt.registerTask 'default', ['coffee:client', 'jade']
-    grunt.registerTask 'deploy', ['clean', 'coffee', 'jade', 'rsync', 'clean']
+    grunt.registerTask 'deploy', ['clean', 'coffee', 'jade', 'uglify', 'rsync', 'clean']

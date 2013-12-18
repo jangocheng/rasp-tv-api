@@ -3,8 +3,20 @@ html
     head
         title= title
         meta(name="viewport", content="width=device-width, initial-scale=1.0")
-        link(href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css", rel="stylesheet")
-        link(href="/styles/styles.css", rel="stylesheet")
+        link(href="/styles/libs/bootstrap.min.css", rel="stylesheet")
+        style(type="text/css")
+            body {
+                padding-top: 2%;
+                padding-bottom: 2%;
+            }
+
+            .error-message {
+                margin-top: 2%;
+            }
+
+            .main-view {
+                margin-top: 3%;
+            }
     body
         .container(ng-app="raspTv")
             .row(ng-controller="navCtrl")
@@ -30,10 +42,13 @@ html
                 .col-xs-12
                     button.btn.btn-danger.btn-lg.btn-block(ng-click="shutdown()")
                         | Shutdown
-        script(type="text/javascript", src="/js/libs/socket.io.min.js")
-        script(type="text/javascript", src="/js/libs/angular.min.js")
-        script(type="text/javascript", src="/js/libs/angular-route.min.js")
-        script(type="text/javascript", src="/js/libs/socket.js")
-        script(type="text/javascript", src="/js/libs/localStorageModule.js")
-        script(type="text/javascript", src="/js/services.js")
-        script(type="text/javascript", src="/js/app.js")
+        if production
+            script(type="text/javascript", src="/js/rasptv.min.js")
+        else
+            script(type="text/javascript", src="/js/libs/socket.io.min.js")
+            script(type="text/javascript", src="/js/libs/angular.js")
+            script(type="text/javascript", src="/js/libs/angular-route.js")
+            script(type="text/javascript", src="/js/libs/socket.js")
+            script(type="text/javascript", src="/js/libs/localStorageModule.js")
+            script(type="text/javascript", src="/js/services.js")
+            script(type="text/javascript", src="/js/app.js")

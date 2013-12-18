@@ -8,6 +8,8 @@ player   = require './routes/player'
 shutdown = require './routes/shutdown'
 youtube  = require './routes/youtube'
 
+process.env.NODE_ENV = if process.argv[2]? then 'production' else null
+
 app = express()
 
 errorHandler = (err, req, res, next) ->
@@ -22,10 +24,16 @@ pageNotFound = (req, res, next) ->
 app.set 'port', 8080
 app.set 'views', __dirname + '/views'
 app.set 'view engine', 'jade'
+
+app.configure 'production', () ->
+    app.use express.compress()
+    app.locals.production = true
+
 app.use express.favicon()
-app.use express.bodyParser()
+app.use express.json()
+app.use express.urlencoded()
 app.use app.router
-app.use express.static(path.join(__dirname, 'assets'))
+app.use express.static(path.join(__dirname, 'assets'), {maxAge : 31557600000})
 app.use errorHandler
 app.use pageNotFound
 
