@@ -1,4 +1,12 @@
-services = angular.module 'raspTv.services', ['LocalStorageModule', 'btford.socket-io']
+services = angular.module 'raspTv.services', []
+
+services.constant 'playerCommands',
+    TOGGLE : 0
+    BACKWARD : 1
+    FORWARD : 2
+    STOP : 3
+    FASTBACKWARD : 4
+    FASTFORWARD : 5
 
 services.factory 'movies', ['$http', ($http) ->
     movies = []
@@ -80,34 +88,35 @@ services.factory 'shows', ['$http', ($http) ->
     return api
 ]
 
-services.factory 'player', ['$rootScope', '$http', 'localStorageService', 'socket', ($rootScope, $http, localStorageService, socket) ->
+services.factory 'player', ['$rootScope', '$http', '$location', 'playerCommands', ($rootScope, $http, $location, playerCommands) ->
     nowPlaying = ''
     isPaused   = false
     isPlaying  = false
+    socket     = new WebSocket "ws://#{$location.host()}:#{$location.port()}"
 
     # Getters and setters
     setNowPlaying = (video) ->
         nowPlaying = video
-        localStorageService.set 'playing', video
+        localStorage.setItem 'playing', video
     getNowPlaying = () ->
         nowPlaying
     getIsPaused = () ->
         isPaused
     setIsPaused = (paused) ->
         isPaused = paused
-        localStorageService.set 'isPaused', paused
+        localStorage.setItem 'isPaused', paused
     getIsPlaying = () ->
         isPlaying
     setIsPlaying = (playing) ->
         isPlaying = playing
-        localStorageService.set 'isPlaying', playing
+        localStorage.setItem 'isPlaying', playing
         $rootScope.isPlaying = playing
 
     api = {}
     api.checkCache = () ->
-        nowPlaying = localStorageService.get 'playing'
-        isPaused   = if localStorageService.get('isPaused') is 'true' then true else false
-        isPlaying  = if localStorageService.get('isPlaying') is 'true' then true else false
+        nowPlaying = localStorage.getItem 'playing'
+        isPaused   = if localStorage.getItem('isPaused') is 'true' then true else false
+        isPlaying  = if localStorage.getItem('isPlaying') is 'true' then true else false
         $rootScope.isPlaying = isPlaying
 
     api.playMovie = (movie, cb) ->
@@ -162,35 +171,38 @@ services.factory 'player', ['$rootScope', '$http', 'localStorageService', 'socke
 
     api.downloadYoutube = (url, shouldPlay, cb) ->
         downloadProgress = 0
-        socket.emit 'youtube', {'url', url, 'shouldPlay' : shouldPlay}
-        socket.on 'progress', (data) ->
-            downloadProgress = data.percent
-            $rootScope.$broadcast 'progress', downloadProgress
-        socket.on 'end', (data) ->
-            downloadProgress = 0
-            if shouldPlay
-                setNowPlaying data.title
-                setIsPlaying true
-                setIsPaused false
-            cb()
-        socket.on 'error', (err) ->
+        socket.send JSON.stringify({'url', url, 'shouldPlay' : shouldPlay})
+        socket.onmessage = (event) ->
+            $rootScope.$apply () ->
+                data = JSON.parse event.data
+                if data.percent?
+                    downloadProgress = data.percent
+                    $rootScope.$broadcast 'progress', downloadProgress
+                else if data.end?
+                    downloadProgress = 0
+                    if shouldPlay
+                        setNowPlaying data.end.title
+                        setIsPlaying true
+                        setIsPaused false
+                    cb()
+        socket.onerror = (err) ->
             cb err
 
     api.toggle = () ->
-        socket.emit 'toggle'
+        socket.send playerCommands.TOGGLE
         setIsPaused not isPaused
     api.backward = () ->
-        socket.emit 'backward'
+        socket.send playerCommands.BACKWARD
     api.forward = () ->
-        socket.emit 'forward'
+        socket.send playerCommands.FORWARD
     api.stop = () ->
-        socket.emit 'stop'
+        socket.send playerCommands.STOP
         setIsPlaying false
-        localStorageService.clearAll()
+        localStorage.clear()
     api.fastBackward = () ->
-        socket.emit 'fastBackward'
+        socket.send playerCommands.FASTBACKWARD
     api.fastForward = () ->
-        socket.emit 'fastForward'
+        socket.send playerCommands.FASTFORWARD
 
     api.setNowPlaying = setNowPlaying
     api.getNowPlaying = getNowPlaying

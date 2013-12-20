@@ -68,11 +68,8 @@ module.exports = (grunt) ->
             client :
                 files :
                     'assets/js/rasptv.min.js' : [
-                        'assets/js/libs/socket.io.min.js',
                         'assets/js/libs/angular.js',
                         'assets/js/libs/angular-route.js',
-                        'assets/js/libs/socket.js',
-                        'assets/js/libs/localStorageModule.js',
                         'assets/js/services.js',
                         'assets/js/app.js'
                     ]

@@ -1,12 +1,13 @@
-express  = require 'express'
-path     = require 'path'
-http     = require 'http'
-index    = require './routes'
-movies   = require './routes/movies'
-shows    = require './routes/shows'
-player   = require './routes/player'
-shutdown = require './routes/shutdown'
-youtube  = require './routes/youtube'
+express         = require 'express'
+path            = require 'path'
+http            = require 'http'
+WebSocketServer = require('ws').Server
+index           = require './routes'
+movies          = require './routes/movies'
+shows           = require './routes/shows'
+player          = require './routes/player'
+shutdown        = require './routes/shutdown'
+youtube         = require './routes/youtube'
 
 process.env.NODE_ENV = if process.argv[2]? then 'production' else null
 
@@ -50,8 +51,9 @@ app.get '/youtube/videos', youtube.get
 app.post '/youtube/play', youtube.play
 
 server = http.createServer app
-io = require('socket.io').listen server
+socketServer = new WebSocketServer
+    'server' : server
 server.listen app.get('port')
-io.sockets.on 'connection', player
+socketServer.on 'connection', player
 
 console.log 'Listening on port ' + app.get('port')
