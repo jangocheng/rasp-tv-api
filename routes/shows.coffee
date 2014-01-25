@@ -36,7 +36,7 @@ getEpisodes = (show, season, callback) ->
     fs.readdir showPath, (err, files) ->
         callback(err, null) if err?
         episodes = files.filter (file) ->
-            file[0] isnt '.' and path.extname(file) in ['.mp4', '.avi', '.mov', '.mkv']
+            file[0] isnt '.' and path.extname(file) in config.supportedFormats
         callback null, episodes.sort (a, b) ->
             test = /^(\d+)\s-\s.+/
             matchesA = test.exec a

@@ -23,10 +23,26 @@ exports.play = (req, res, next) ->
     fs.readdir moviePath, (err, files) ->
         next(err) if err
         movieFiles = files.filter (file) ->
-            path.extname(file) in ['.mp4', '.avi', '.mov', '.mkv']
+            path.extname(file) in config.supportedFormats
         if movieFiles.length > 0
             omx.quit()
             omx.start path.join(moviePath, movieFiles[0])
         else
             next(new Error 'Movie file not found')
         res.send 200
+
+# exports.test = (req, res, next) ->
+#     movie = '/Users/Joe/Movies/2012 NBA TV\'s The Dream Team 720p.mp4'
+#     stats = fs.statSync movie
+#     range = req.range stats.size
+#     console.log range[0]
+#     stream = fs.createReadStream movie,
+#         start : range[0].start
+#         end : range[0].end
+#     res.status 200
+#     res.type '.mp4'
+#     res.set
+#         'Accept-Ranges' : 'bytes'
+#         'Content-Range' : "bytes #{range[0].start}-#{range[0].end}/#{stats.size}"
+#         'Content-Length' : stats.size
+#     stream.pipe res

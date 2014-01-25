@@ -49,6 +49,7 @@ app.post '/shutdown', shutdown
 app.post '/shows/random', shows.random
 app.get '/youtube/videos', youtube.get
 app.post '/youtube/play', youtube.play
+# app.get '/test', movies.test
 
 server = http.createServer app
 socketServer = new WebSocketServer
