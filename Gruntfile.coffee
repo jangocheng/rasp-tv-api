@@ -59,7 +59,7 @@ module.exports = (grunt) ->
                     args : ['--verbose']
                     src : './dist/'
                     dest : '/home/joe/rasp-tv/'
-                    host : 'joe@192.168.1.115'
+                    host : 'joe@192.168.11.2'
                     syncDestIgnoreExcl: true
         shell :
             restart :

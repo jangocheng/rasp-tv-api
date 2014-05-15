@@ -97,7 +97,10 @@ services.factory 'player', ['$rootScope', '$http', '$location', 'playerCommands'
     # Getters and setters
     setNowPlaying = (video) ->
         nowPlaying = video
-        localStorage.setItem 'playing', video
+        if angular.isObject(video)
+            localStorage.setItem 'playing', JSON.stringify(video)
+        else
+            localStorage.setItem 'playing', video
     getNowPlaying = () ->
         nowPlaying
     getIsPaused = () ->
@@ -114,7 +117,8 @@ services.factory 'player', ['$rootScope', '$http', '$location', 'playerCommands'
 
     api = {}
     api.checkCache = () ->
-        nowPlaying = localStorage.getItem 'playing'
+        item = localStorage.getItem('playing')
+        nowPlaying = if item[0] is '{' then JSON.parse(item) else item
         isPaused   = if localStorage.getItem('isPaused') is 'true' then true else false
         isPlaying  = if localStorage.getItem('isPlaying') is 'true' then true else false
         $rootScope.isPlaying = isPlaying
