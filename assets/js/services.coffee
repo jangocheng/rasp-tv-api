@@ -118,7 +118,7 @@ services.factory 'player', ['$rootScope', '$http', '$location', 'playerCommands'
     api = {}
     api.checkCache = () ->
         item = localStorage.getItem('playing')
-        nowPlaying = if item[0] is '{' then JSON.parse(item) else item
+        nowPlaying = if item? and item[0] is '{' then JSON.parse(item) else item
         isPaused   = if localStorage.getItem('isPaused') is 'true' then true else false
         isPlaying  = if localStorage.getItem('isPlaying') is 'true' then true else false
         $rootScope.isPlaying = isPlaying
