@@ -6,8 +6,6 @@ index           = require './routes'
 movies          = require './routes/movies'
 shows           = require './routes/shows'
 player          = require './routes/player'
-shutdown        = require './routes/shutdown'
-youtube         = require './routes/youtube'
 
 process.env.NODE_ENV = if process.argv[2]? then 'production' else null
 
@@ -45,10 +43,7 @@ app.get '/shows', shows.index
 app.post '/shows/seasons', shows.seasons
 app.post '/shows/seasons/episodes', shows.episodes
 app.post '/shows/play', shows.play
-app.post '/shutdown', shutdown
 app.post '/shows/random', shows.random
-app.get '/youtube/videos', youtube.get
-app.post '/youtube/play', youtube.play
 
 server = http.createServer app
 socketServer = new WebSocketServer

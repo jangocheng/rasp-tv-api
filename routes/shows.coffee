@@ -61,8 +61,7 @@ play = (show, season, episode, callback) ->
 exports.index = (req, res, next) ->
     getShows (err, shows) ->
         next(err) if err?
-        res.json
-            'shows' : shows
+        res.json shows
 
 exports.seasons = (req, res, next) ->
     getSeasons req.body.show, (err, seasons) ->
