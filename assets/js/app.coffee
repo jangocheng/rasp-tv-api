@@ -1,6 +1,8 @@
-raspTv = angular.module 'raspTv', ['ngRoute', 'raspTv.services']
+raspTv = angular.module 'raspTv', ['ngRoute', 'ngAnimate', 'angular-loading-bar', 'ngResource', 'raspTv.services']
 
-raspTv.config ['$routeProvider', ($routeProvider) ->
+raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider) ->
+    $httpProvider.interceptors.push 'errorInterceptor'
+
     $routeProvider.when '/',
         templateUrl : '/templates/movies.html'
         controller : 'movieCtrl'
@@ -16,9 +18,6 @@ raspTv.config ['$routeProvider', ($routeProvider) ->
     $routeProvider.when '/shows/seasons/episodes',
         templateUrl : '/templates/episodes.html'
         controller : 'episodesCtrl'
-    $routeProvider.when '/youtube',
-        templateUrl : '/templates/youtube.html'
-        controller : 'youtubeCtrl'
 ]
 
 raspTv.run ['player', (player) ->
@@ -33,20 +32,22 @@ raspTv.controller 'navCtrl', ['$scope', '$location', ($scope, $location) ->
             'active'
         else if page is 'play' and $location.path() is '/play'
             'active'
-        else if page is 'youtube' and $location.path() is '/youtube'
-            'active'
         else
             ''
 ]
 
-raspTv.controller 'errorCtrl', ['$scope', ($scope) ->
+raspTv.controller 'errorCtrl', ['$scope', '$rootScope', ($scope, $rootScope) ->
+
+    $rootScope.$on 'httpError', (event, err) ->
+        $scope.error = err
+
     $scope.close = () ->
         $scope.error = null
 ]
 
 raspTv.controller 'movieCtrl', ['$scope', 'movies', '$rootScope', '$location', 'player', ($scope, movies, $rootScope, $location, player) ->
-    movies.getAll (err, movies) ->
-        if err? then $rootScope.error = err.msg else $scope.movies = movies
+    movies.getAll().then (movies) ->
+        $scope.movies = movies
 
     $scope.play = (movie) ->
         player.playMovie movie, (err) ->
@@ -76,8 +77,8 @@ raspTv.controller 'playCtrl', ['$scope', '$location', 'player', '$rootScope', ($
 ]
 
 raspTv.controller 'showsCtrl', ['$scope', 'shows', '$rootScope', '$location', ($scope, shows, $rootScope, $location) ->
-    shows.getAll (err, shows) ->
-        if err? then $rootScope.error = err.msg else $scope.shows = shows
+    shows.getAll().then (shows) ->
+        $scope.shows = shows
 
     $scope.showSeasons = (show) ->
         shows.setShow show
@@ -89,16 +90,16 @@ raspTv.controller 'seasonsCtrl', ['$scope', '$rootScope', '$location', 'shows', 
 
     $scope.show = shows.getShow()
 
-    shows.getSeasons (err, seasons) ->
-        if err? then $rootScope.error = err.msg else $scope.seasons = seasons
+    shows.getSeasons().then (seasons) ->
+        $scope.seasons = seasons
 
     $scope.showEpisodes = (season) ->
         shows.setSeason season
         $location.path 'shows/seasons/episodes'
 
     $scope.random = () ->
-        player.playRandomEpisode $scope.show, (err) ->
-            if err? then $rootScope.error = err.msg else $location.path('play')
+        player.playRandomEpisode($scope.show).then () ->
+            $location.path('play')
 ]
 
 raspTv.controller 'episodesCtrl', ['$scope', '$rootScope', '$location', 'shows', 'player', ($scope, $rootScope, $location, shows, player) ->
@@ -110,67 +111,17 @@ raspTv.controller 'episodesCtrl', ['$scope', '$rootScope', '$location', 'shows',
     $scope.show = shows.getShow()
     $scope.season = shows.getSeason()
 
-    shows.getEpisodes (err, episodes) ->
-        if err? then $rootScope.error = err.msg else $scope.episodes = episodes
+    shows.getEpisodes().then (episodes) ->
+        $scope.episodes = episodes
 
     $scope.play = (episode) ->
-        player.playShow $scope.show, $scope.season, episode, (err) ->
-            if err?
-                $rootScope.error = err.msg
-            else
-                shows.setEpisode episode.name
-                $location.path 'play'
+        player.playShow($scope.show, $scope.season, episode).then () ->
+            shows.setEpisode episode.name
+            $location.path 'play'
 
     $scope.random = () ->
         episode = $scope.episodes[Math.floor(Math.random() * $scope.episodes.length)]
-        player.playShow $scope.show, $scope.season, episode, (err) ->
-            if err?
-                $rootScope.error = err.msg
-            else
-                shows.setEpisode episode.name
-                $location.path 'play'
-]
-
-raspTv.controller 'shutdownCtrl', ['$scope', '$http', 'player', '$rootScope', ($scope, $http, player, $rootScope) ->
-    $scope.shutdown = () ->
-        if window.confirm('Shutdown?')
-            player.stop()
-            req = $http.post '/shutdown'
-            req.error (err) ->
-                $rootScope.error = err.msg
-]
-
-raspTv.controller 'youtubeCtrl', ['$scope', 'player', '$rootScope', '$location', '$timeout', 'youtube', ($scope, player, $rootScope, $location, $timeout, youtube) ->
-    $scope.isDownloading = false
-    timeout = null;
-    $scope.shouldPlay = false
-
-    youtube.getAll (err, videos) ->
-        if err? then $rootScope.error = err.msg else $scope.videos = videos
-
-    $scope.play = (video) ->
-        player.playYoutube video, (err) ->
-            if err? then $rootScope.error = err.msg else $location.path 'play'
-
-
-    $scope.download = () ->
-        $scope.isDownloading = false
-        $timeout.cancel timeout
-        timeout = $timeout ( ->
-            $scope.isDownloading = true
-            player.downloadYoutube $scope.url, $scope.shouldPlay, (err) ->
-                $scope.isDownloading = false
-                if err?
-                    $rootScope.error = err.msg
-                else
-                    if $scope.shouldPlay
-                        $location.path 'play'
-                    else
-                        youtube.getAll (err, videos) ->
-                            $scope.url = ''
-                            if err? then $rootScope.error = err.msg else $scope.videos = videos
-        ), 1500
-
-        $scope.$on 'progress', (event, progress) ->
-            $scope.progress = {width : "#{progress}%"}
+        player.playShow($scope.show, $scope.season, episode).then () ->
+            shows.setEpisode episode.name
+            $location.path 'play'
 ]

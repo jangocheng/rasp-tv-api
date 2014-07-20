@@ -8,25 +8,37 @@ services.constant 'playerCommands',
     FASTBACKWARD : 4
     FASTFORWARD : 5
 
-services.factory 'movies', ['$http', ($http) ->
-    movies = []
-    movie = ''
-    api = {}
+services.factory 'errorInterceptor', ['$q', '$rootScope', ($q, $rootScope) ->
 
-    api.getAll = (cb) ->
+    broadcastError = (err) ->
+        $rootScope.$broadcast 'httpError', err
+        $q.reject err
+
+    {
+        'requestError'  : broadcastError
+        'responseError' : broadcastError
+    }
+]
+
+services.factory 'movies', ['$resource', '$q', ($resource, $q) ->
+    movies = []
+    api = {}
+    movieService = $resource '/movies'
+
+    api.getAll = () ->
+        deferred = $q.defer()
         if movies.length is 0
-            req = $http.get '/movies'
-            req.success (data) ->
-                movies = data.movies
-                cb null, movies
-            req.error (err) ->
-                cb err, null
+            movieService.query (res) ->
+                movies = res
+                deferred.resolve movies
         else
-            cb null, movies
+            deferred.resolve movies
+        deferred.promise
+
     return api
 ]
 
-services.factory 'shows', ['$http', ($http) ->
+services.factory 'shows', ['$http', '$resource', '$q', ($http, $resource, $q) ->
     shows   = []
     episode = ''
     season  = ''
@@ -47,26 +59,28 @@ services.factory 'shows', ['$http', ($http) ->
     setShow = (val) ->
         show = val
 
-    api.getAll = (cb) ->
+    api.getAll = () ->
+        deferred = $q.defer()
         if shows.length is 0
-            req = $http.get '/shows'
-            req.success (data) ->
-                shows = data.shows
-                cb null, shows
-            req.error (err) ->
-                cb err, null
+            $resource('/shows').query (res) ->
+                shows = res
+                deferred.resolve shows
         else
-            cb null, shows
+            deferred.resolve shows
+        deferred.promise
 
-    api.getSeasons = (cb) ->
+    api.getSeasons = () ->
+        deferred = $q.defer()
         req = $http.post '/shows/seasons',
             'show' : show
         req.success (data) ->
-            cb null, data.seasons
+            deferred.resolve data.seasons
         req.error (err) ->
-            cb err, null
+            deferred.reject err
+        deferred.promise
 
-    api.getEpisodes = (cb) ->
+    api.getEpisodes = () ->
+        deferred = $q.defer()
         req = $http.post '/shows/seasons/episodes',
             'show' : show
             'season' : season
@@ -74,9 +88,10 @@ services.factory 'shows', ['$http', ($http) ->
             episodes = data.episodes.map (item) ->
                 results = /^(\d+)\s-\s(.+)\.\w+$/.exec item
                 {filename : item, name : results[2], num : results[1]}
-            cb null, episodes
+            deferred.resolve episodes
         req.error (err) ->
-            cb err, null
+            deferred.reject err
+        deferred.promise
 
     api.getEpisode = getEpisode
     api.setEpisode = setEpisode
@@ -88,7 +103,7 @@ services.factory 'shows', ['$http', ($http) ->
     return api
 ]
 
-services.factory 'player', ['$rootScope', '$http', '$location', 'playerCommands', ($rootScope, $http, $location, playerCommands) ->
+services.factory 'player', ['$rootScope', '$http', '$location', 'playerCommands', '$q', ($rootScope, $http, $location, playerCommands, $q) ->
     nowPlaying = ''
     isPaused   = false
     isPlaying  = false
@@ -124,32 +139,37 @@ services.factory 'player', ['$rootScope', '$http', '$location', 'playerCommands'
         $rootScope.isPlaying = isPlaying
 
     api.playMovie = (movie, cb) ->
+        deferred = $q.defer()
         req = $http.post '/movies/play',
             'movie' : movie
         req.success () ->
             setNowPlaying movie
             setIsPlaying true
             setIsPaused false
-            cb()
+            deferred.resolve()
         req.error (err) ->
-            cb err
+            deferred.reject err
+        deferred.promise
 
     api.playShow = (show, season, episode, cb) ->
         showProps =
             'show' : show
             'season' : season
             'episode' : episode.filename
+        deferred = $q.defer()
         req = $http.post '/shows/play', showProps
         req.success () ->
             showProps.episode = episode.name
             setNowPlaying showProps
             setIsPlaying true
             setIsPaused false
-            cb()
+            deferred.resolve()
         req.error (err) ->
-            cb err
+            deferred.reject err
+        deferred.promise
 
     api.playRandomEpisode = (show, cb) ->
+        deferred = $q.defer()
         req = $http.post '/shows/random', {'show' : show}
         req.success (data) ->
             showProps = data
@@ -159,38 +179,10 @@ services.factory 'player', ['$rootScope', '$http', '$location', 'playerCommands'
             setNowPlaying showProps
             setIsPlaying true
             setIsPaused false
-            cb()
+            deferred.resolve()
         req.error (err) ->
-            cb err
-
-    api.playYoutube = (video, cb) ->
-        req = $http.post '/youtube/play', {'filename' : video.filename}
-        req.success () ->
-            setNowPlaying video.title
-            setIsPlaying true
-            setIsPaused false
-            cb()
-        req.error (err) ->
-            cb err
-
-    api.downloadYoutube = (url, shouldPlay, cb) ->
-        downloadProgress = 0
-        socket.send JSON.stringify({'url', url, 'shouldPlay' : shouldPlay})
-        socket.onmessage = (event) ->
-            $rootScope.$apply () ->
-                data = JSON.parse event.data
-                if data.percent?
-                    downloadProgress = data.percent
-                    $rootScope.$broadcast 'progress', downloadProgress
-                else if data.end?
-                    downloadProgress = 0
-                    if shouldPlay
-                        setNowPlaying data.end.title
-                        setIsPlaying true
-                        setIsPaused false
-                    cb()
-        socket.onerror = (err) ->
-            cb err
+            deferred.reject err
+        deferred.promise
 
     api.toggle = () ->
         socket.send playerCommands.TOGGLE
@@ -214,25 +206,6 @@ services.factory 'player', ['$rootScope', '$http', '$location', 'playerCommands'
     api.setIsPaused = setIsPaused
     api.isPlaying = getIsPlaying
     api.setIsPlaying = setIsPlaying
-
-    return api
-]
-
-services.factory 'youtube', ['$http', ($http) ->
-
-    videos = []
-    api = {}
-
-    api.getAll = (cb) ->
-        if videos.length is 0
-            req = $http.get '/youtube/videos'
-            req.success (data) ->
-                videos
-                cb null, data.videos
-            req.error (err) ->
-                cb err, null
-        else
-            cb null, videos
 
     return api
 ]

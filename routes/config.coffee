@@ -1,11 +1,9 @@
 module.exports =
     moviesDir : '/media/passport/Movies'
     showsDir : '/media/passport/TV Shows'
-    youtubeDir : '/media/passport/youtube'
     supportedFormats : ['.mp4', '.avi', '.mov', '.mkv', '.m4v']
 
 # module.exports =
-#     moviesDir : '/media/passport/Movies'
-#     showsDir : '/media/passport/TV Shows'
-#     youtubeDir : '/Users/Joe/Projects/rasp-tv/videos'
+#     moviesDir : '/Volumes/My Passport/Movies'
+#     showsDir : '/Volumes/My Passport/TV Shows'
 #     supportedFormats : ['.mp4', '.avi', '.mov', '.mkv', '.m4v']

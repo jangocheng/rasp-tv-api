@@ -14,7 +14,6 @@ module.exports = (grunt) ->
                     'routes/shows.js' : 'routes/shows.coffee'
                     'routes/player.js' : 'routes/player.coffee'
                     'routes/shutdown.js' : 'routes/shutdown.coffee'
-                    'routes/youtube.js' : 'routes/youtube.coffee'
                     'routes/config.js' : 'routes/config.coffee'
         clean : ['app.js', 'routes/*.js', 'assets/js/*.js', 'assets/templates/*.html', 'dist', 'omxcontrol']
         watch :
@@ -32,7 +31,6 @@ module.exports = (grunt) ->
                     'assets/templates/shows.html' : 'assets/templates/shows.jade'
                     'assets/templates/seasons.html' : 'assets/templates/seasons.jade'
                     'assets/templates/episodes.html' : 'assets/templates/episodes.jade'
-                    'assets/templates/youtube.html' : 'assets/templates/youtube.jade'
         rsync :
             options :
                 args : ['--verbose']
@@ -69,7 +67,10 @@ module.exports = (grunt) ->
                 files :
                     'assets/js/rasptv.min.js' : [
                         'assets/js/libs/angular.js',
+                        'assets/js/libs/angular-animate.js'
                         'assets/js/libs/angular-route.js',
+                        'assets/js/libs/angular-resource.js',
+                        'assets/js/libs/loading-bar.js',
                         'assets/js/services.js',
                         'assets/js/app.js'
                     ]
