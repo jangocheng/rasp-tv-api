@@ -10,7 +10,7 @@ services.constant 'playerCommands',
 
 services.factory 'errorInterceptor', ['$q', '$rootScope', ($q, $rootScope) ->
 
-    broadcastError = (event, err) ->
+    broadcastError = (err) ->
         $rootScope.$broadcast 'httpError', err
         $q.reject err
 
@@ -20,192 +20,135 @@ services.factory 'errorInterceptor', ['$q', '$rootScope', ($q, $rootScope) ->
     }
 ]
 
-services.factory 'movies', ['$resource', '$q', ($resource, $q) ->
-    movies = []
+services.factory 'Movies', ['$resource', '$rootScope', 'Player', ($resource, $rootScope, Player) ->
     api = {}
-    movieService = $resource '/movies'
+    Movies = $resource '/movies/:id', {id : '@id'},
+        play :
+            method : 'GET'
+            url : '/movies/:id/play'
+            params : {id : '@id'}
+        scan :
+            method : 'GET'
+            url : '/scan/movies'
 
-    api.getAll = () ->
-        deferred = $q.defer()
-        if movies.length is 0
-            movieService.query (res) ->
-                movies = res
-                deferred.resolve movies
-        else
-            deferred.resolve movies
-        deferred.promise
+    api.getAll = (isIndexed) ->
+        Movies.query({isIndexed : isIndexed}).$promise
+
+    api.get = (id) ->
+        Movies.get({id : id}).$promise
+
+    api.save = (movie) ->
+        Movies.save({id : movie.Id}, movie).$promise
+
+    api.play = (id) ->
+        Movies.play({id : id}).$promise.then () ->
+            Player.isPlaying true
+            Player.nowPlaying {movie : id}
+            $rootScope.$broadcast 'play'
+
+    api.scan = () ->
+        Movies.scan().$promise
 
     return api
 ]
 
-services.factory 'shows', ['$http', '$resource', '$q', ($http, $resource, $q) ->
-    shows   = []
-    episode = ''
-    season  = ''
-    show    = ''
-    api     = {}
-
-    # Getters and setters
-    getEpisode = () ->
-        episode
-    setEpisode = (val) ->
-        episode = val
-    getSeason = () ->
-        season
-    setSeason = (val) ->
-        season = val
-    getShow = () ->
-        show
-    setShow = (val) ->
-        show = val
+services.factory 'Shows', ['$resource', '$rootScope', 'Player', '$route', '$q', ($resource, $rootScope, Player, $route, $q) ->
+    api = {}
+    Shows = $resource '/shows/:id', {id : '@id'},
+        add :
+            method : 'POST'
+            url : '/shows/add'
+        getEpisode :
+            method : 'GET'
+            url : '/shows/episodes/:id'
+            params : {id : '@id'}
+        getAllEpisodes :
+            method : 'GET'
+            url : '/episodes'
+            isArray : true
+        saveEpisode :
+            method : 'POST'
+            url : '/shows/episodes/:id'
+            params : {id : '@id'}
+        playEpisode :
+            method : 'GET'
+            url : '/shows/episodes/:id/play'
+            params : {id : '@id'}
+        scan :
+            method : 'GET'
+            url : '/scan/episodes'
 
     api.getAll = () ->
-        deferred = $q.defer()
-        if shows.length is 0
-            $resource('/shows').query (res) ->
-                shows = res
-                deferred.resolve shows
-        else
-            deferred.resolve shows
-        deferred.promise
+        Shows.query().$promise
 
-    api.getSeasons = () ->
-        deferred = $q.defer()
-        req = $http.post '/shows/seasons',
-            'show' : show
-        req.success (data) ->
-            deferred.resolve data.seasons
-        req.error (err) ->
-            deferred.reject err
-        deferred.promise
+    api.get = (id) ->
+        Shows.get({id : id}).$promise
 
-    api.getEpisodes = () ->
-        deferred = $q.defer()
-        req = $http.post '/shows/seasons/episodes',
-            'show' : show
-            'season' : season
-        req.success (data) ->
-            episodes = data.episodes.map (item) ->
-                results = /^(\d+)\s-\s(.+)\.\w+$/.exec item
-                {filename : item, name : results[2], num : results[1]}
-            deferred.resolve episodes
-        req.error (err) ->
-            deferred.reject err
-        deferred.promise
+    api.add = (show) ->
+        Shows.add({}, show).$promise
 
-    api.getEpisode = getEpisode
-    api.setEpisode = setEpisode
-    api.getSeason = getSeason
-    api.setSeason = setSeason
-    api.getShow = getShow
-    api.setShow = setShow
+    api.getAllEpisodes = (isIndexed) ->
+        Shows.getAllEpisodes({isIndexed : isIndexed}).$promise
+
+    api.getEpisode = (id) ->
+        Shows.getEpisode({id : id}).$promise
+
+    api.saveEpisode = (episode) ->
+        Shows.saveEpisode({id : episode.Id}, episode).$promise
+
+    api.play = (id) ->
+        Shows.playEpisode({id : id}).$promise.then () ->
+            Player.isPlaying true
+            Player.nowPlaying
+                episode : id
+                show : $route.current.params.id
+                season : $route.current.params.season
+            $rootScope.$broadcast 'play'
+
+    api.scan = () ->
+        Shows.scan().$promise
 
     return api
 ]
 
-services.factory 'player', ['$rootScope', '$http', '$location', 'playerCommands', '$q', ($rootScope, $http, $location, playerCommands, $q) ->
-    nowPlaying = ''
-    isPaused   = false
-    isPlaying  = false
-    socket     = new WebSocket "ws://#{$location.host()}:#{$location.port()}"
-
-    # Getters and setters
-    setNowPlaying = (video) ->
-        nowPlaying = video
-        if angular.isObject(video)
-            localStorage.setItem 'playing', JSON.stringify(video)
-        else
-            localStorage.setItem 'playing', video
-    getNowPlaying = () ->
-        nowPlaying
-    getIsPaused = () ->
-        isPaused
-    setIsPaused = (paused) ->
-        isPaused = paused
-        localStorage.setItem 'isPaused', paused
-    getIsPlaying = () ->
-        isPlaying
-    setIsPlaying = (playing) ->
-        isPlaying = playing
-        localStorage.setItem 'isPlaying', playing
-        $rootScope.isPlaying = playing
+services.factory 'Player', ['$rootScope', 'playerCommands', '$resource', ($rootScope, playerCommands, $resource) ->
+    Player = $resource '/player/:command', {command : '@command'}
 
     api = {}
-    api.checkCache = () ->
-        item = localStorage.getItem('playing')
-        nowPlaying = if item? and item[0] is '{' then JSON.parse(item) else item
-        isPaused   = if localStorage.getItem('isPaused') is 'true' then true else false
-        isPlaying  = if localStorage.getItem('isPlaying') is 'true' then true else false
-        $rootScope.isPlaying = isPlaying
-
-    api.playMovie = (movie, cb) ->
-        deferred = $q.defer()
-        req = $http.post '/movies/play',
-            'movie' : movie
-        req.success () ->
-            setNowPlaying movie
-            setIsPlaying true
-            setIsPaused false
-            deferred.resolve()
-        req.error (err) ->
-            deferred.reject err
-        deferred.promise
-
-    api.playShow = (show, season, episode, cb) ->
-        showProps =
-            'show' : show
-            'season' : season
-            'episode' : episode.filename
-        deferred = $q.defer()
-        req = $http.post '/shows/play', showProps
-        req.success () ->
-            showProps.episode = episode.name
-            setNowPlaying showProps
-            setIsPlaying true
-            setIsPaused false
-            deferred.resolve()
-        req.error (err) ->
-            deferred.reject err
-        deferred.promise
-
-    api.playRandomEpisode = (show, cb) ->
-        deferred = $q.defer()
-        req = $http.post '/shows/random', {'show' : show}
-        req.success (data) ->
-            showProps = data
-            showProps.show = show
-            matches = /^\d+\s-\s(.+)\.\w+$/.exec showProps.episode
-            showProps.episode = matches[1]
-            setNowPlaying showProps
-            setIsPlaying true
-            setIsPaused false
-            deferred.resolve()
-        req.error (err) ->
-            deferred.reject err
-        deferred.promise
-
+    api.isPaused = (isPaused) ->
+        if isPaused?
+            localStorage['isPaused'] = isPaused
+        else
+            return if localStorage['isPaused'] is 'true' then true else false
+    api.isPlaying = (isPlaying) ->
+        if isPlaying?
+            localStorage['isPlaying'] = isPlaying
+        else
+            return if localStorage['isPlaying'] is 'true' then true else false
+    api.nowPlaying = (nowPlaying) ->
+        if nowPlaying? and angular.isObject(nowPlaying)
+            localStorage['nowPlaying'] = JSON.stringify nowPlaying
+        else
+            playing = localStorage['nowPlaying']
+            return if playing? then JSON.parse(playing) else playing
     api.toggle = () ->
-        socket.send playerCommands.TOGGLE
-        setIsPaused not isPaused
+        Player.get {command : playerCommands.TOGGLE}
+        api.isPaused(not api.isPaused())
     api.backward = () ->
-        socket.send playerCommands.BACKWARD
+        Player.get {command : playerCommands.BACKWARD}
     api.forward = () ->
-        socket.send playerCommands.FORWARD
+        Player.get {command : playerCommands.FORWARD}
     api.stop = () ->
-        socket.send playerCommands.STOP
-        setIsPlaying false
+        Player.get {command : playerCommands.STOP}
         localStorage.clear()
+        $rootScope.$broadcast 'stop'
     api.fastBackward = () ->
-        socket.send playerCommands.FASTBACKWARD
+        Player.get {command : playerCommands.FASTBACKWARD}
     api.fastForward = () ->
-        socket.send playerCommands.FASTFORWARD
-
-    api.setNowPlaying = setNowPlaying
-    api.getNowPlaying = getNowPlaying
-    api.isPaused = getIsPaused
-    api.setIsPaused = setIsPaused
-    api.isPlaying = getIsPlaying
-    api.setIsPlaying = setIsPlaying
+        Player.get {command : playerCommands.FASTFORWARD}
+    api.clearCache = () ->
+        localStorage.clear()
+        $rootScope.$broadcast 'stop'
 
     return api
 ]

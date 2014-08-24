@@ -1,0 +1,33 @@
+<div class="row" ng-if="success">
+    <div class="col-xs-12">
+        <div class="alert alert-success alert-dismissable">
+            <button type="button" ng-click="close()" class="close">&times;</button>
+            <strong>Success!</strong>
+        </div>
+    </div>
+</div>
+<br>
+<div class="row">
+    <div class="col-xs-12">
+        <button class="btn btn-default btn-block" ng-click="scan()" title="Scan">
+            <span class="glyphicon glyphicon-search"></span>
+        </button>
+    </div>
+</div>
+<br>
+<div class="row">
+    <div class="col-xs-12">
+        <input type="text" ng-model="title" placeholder="Search" class="form-control"/>
+    </div>
+</div>
+<br/>
+<div class="row">
+    <div class="col-xs-12">
+        <p ng-if="shows.length === 0">No indexed shows</p>
+        <ul ng-if="shows" class="list-group">
+            <a ng-href="#/shows/{{show.Id}}/seasons" ng-repeat="show in shows | filter:title track by show.Id" class="list-group-item">
+                {{show.Title}}
+            </a>
+        </ul>
+    </div>
+</div>

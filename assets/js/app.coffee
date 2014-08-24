@@ -3,125 +3,243 @@ raspTv = angular.module 'raspTv', ['ngRoute', 'ngAnimate', 'angular-loading-bar'
 raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider) ->
     $httpProvider.interceptors.push 'errorInterceptor'
 
-    $routeProvider.when '/',
+    $routeProvider.when '/movies',
         templateUrl : '/templates/movies.html'
         controller : 'movieCtrl'
-    $routeProvider.when '/play',
+        resolve :
+            movies : ['Movies', (Movies) ->
+                Movies.getAll true
+            ]
+    $routeProvider.when '/movies/:id/play',
         templateUrl : '/templates/play.html'
-        controller : 'playCtrl'
+        controller : 'playMovieCtrl'
+        resolve :
+            movie : ['$route', 'Movies', ($route, Movies) ->
+                Movies.get $route.current.params.id
+            ]
     $routeProvider.when '/shows',
         templateUrl : '/templates/shows.html'
         controller : 'showsCtrl'
-    $routeProvider.when '/shows/seasons',
+        resolve :
+            shows : ['Shows', (Shows) ->
+                Shows.getAll true
+            ]
+    $routeProvider.when '/shows/:id/seasons',
         templateUrl : '/templates/seasons.html'
         controller : 'seasonsCtrl'
-    $routeProvider.when '/shows/seasons/episodes',
+        resolve :
+            show : ['$route', 'Shows', ($route, Shows) ->
+                Shows.get $route.current.params.id
+            ]
+    $routeProvider.when '/shows/:id/seasons/:season/episodes',
         templateUrl : '/templates/episodes.html'
         controller : 'episodesCtrl'
+        resolve :
+            show : ['$route', 'Shows', ($route, Shows) ->
+                Shows.get $route.current.params.id
+            ]
+    $routeProvider.when '/shows/:id/seasons/:season/episodes/:episode/play',
+        templateUrl : '/templates/play.html'
+        controller : 'playShowCtrl'
+        resolve :
+            show : ['$route', 'Shows', ($route, Shows) ->
+                Shows.get $route.current.params.id
+            ]
+    $routeProvider.when '/edit',
+        templateUrl : '/templates/edit.html'
+        controller : 'editCtrl'
+        resolve:
+            nonIndexedMovies : ['Movies', (Movies) ->
+                Movies.getAll false
+            ]
+            nonIndexedEpisodes : ['Shows', (Shows) ->
+                Shows.getAllEpisodes false
+            ]
+    $routeProvider.when '/edit/movie/:id',
+        templateUrl : '/templates/editMovie.html'
+        controller : 'editMovieCtrl'
+        resolve :
+            movie : ['$route', 'Movies', ($route, Movies) ->
+                Movies.get $route.current.params.id
+            ]
+    $routeProvider.when '/edit/episode/:id',
+        templateUrl : '/templates/editEpisode.html'
+        controller : 'editEpisodeCtrl'
+        resolve :
+            episode : ['$route', 'Shows', ($route, Shows) ->
+                Shows.getEpisode $route.current.params.id
+            ]
+            shows : ['Shows', (Shows) ->
+                Shows.getAll false
+            ]
+    $routeProvider.otherwise
+        redirectTo : '/movies'
 ]
 
-raspTv.run ['player', (player) ->
-    player.checkCache()
-]
+raspTv.controller 'navCtrl', ['$scope', '$location', 'Player', ($scope, $location, Player) ->
+    $scope.isPlaying = Player.isPlaying()
 
-raspTv.controller 'navCtrl', ['$scope', '$location', ($scope, $location) ->
     $scope.isActive = (page) ->
-        if page is 'movies' and $location.path() is '/'
-            'active'
-        else if page is 'shows' and /^\/shows.*/.test($location.path())
-            'active'
-        else if page is 'play' and $location.path() is '/play'
-            'active'
-        else
-            ''
+        regex = new RegExp "#{page}", 'i'
+        regex.test $location.path()
+
+    setUpLink = () ->
+        nowPlaying = Player.nowPlaying()
+        if nowPlaying?
+            if nowPlaying.movie?
+                $scope.nowPlayingLink = "#/movies/#{nowPlaying.movie}/play"
+            else
+                $scope.nowPlayingLink = "#/shows/#{nowPlaying.show}/seasons/#{nowPlaying.season}/episodes/#{nowPlaying.episode}/play"
+
+    $scope.$on 'play', () ->
+        setUpLink()
+        $scope.isPlaying = true
+    $scope.$on 'stop', () -> $scope.isPlaying = false
+
+    setUpLink()
 ]
 
 raspTv.controller 'errorCtrl', ['$scope', '$rootScope', ($scope, $rootScope) ->
 
-    $rootScope.$on 'httpError', (event, err) ->
-        $scope.error = err
+    $scope.$on 'httpError', (event, err) -> $scope.error = err
 
-    $scope.close = () ->
-        $scope.error = null
+    $scope.close = () -> $scope.error = null
 ]
 
-raspTv.controller 'movieCtrl', ['$scope', 'movies', '$rootScope', '$location', 'player', ($scope, movies, $rootScope, $location, player) ->
-    movies.getAll().then (movies) ->
-        $scope.movies = movies
+raspTv.controller 'movieCtrl', ['$scope', 'movies', 'Movies', ($scope, movies, Movies) ->
+    $scope.movies = movies
 
-    $scope.play = (movie) ->
-        player.playMovie movie, (err) ->
-            if err? then $rootScope.error = err.msg else $location.path 'play'
+    $scope.scan = () ->
+        Movies.scan().then () -> $scope.success = true
+
+    $scope.close = () -> $scope.success = false
 ]
 
-raspTv.controller 'playCtrl', ['$scope', '$location', 'player', '$rootScope', ($scope, $location, player, $rootScope) ->
-    $scope.isPlaying = player.isPlaying()
-    $location.path('/') if not $scope.isPlaying
+raspTv.controller 'playMovieCtrl', ['$scope', 'Player', 'movie', 'Movies', '$routeParams', '$location', ($scope, Player, movie, Movies, $routeParams, $location) ->
+    setup = () ->
+        $scope.isShow = false
+        $scope.isPaused = Player.isPaused()
+        $scope.playing = movie
 
-    $scope.playing = player.getNowPlaying()
-    $scope.isShow = angular.isObject $scope.playing
-    $scope.isPaused = player.isPaused()
+        $scope.toggle = () ->
+            Player.toggle()
+            $scope.isPaused = Player.isPaused()
 
-    $scope.toggle = () ->
-        player.toggle()
-        $scope.isPaused = player.isPaused()
+        $scope.backward = Player.backward
+        $scope.forward = Player.forward
+        $scope.fastBackward = Player.fastBackward
+        $scope.fastForward = Player.fastForward
+        $scope.stop = () ->
+            Player.stop()
+            $location.path '/movies'
 
-    $scope.backward = player.backward
-    $scope.forward = player.forward
-    $scope.fastBackward = player.fastBackward
-    $scope.fastForward = player.fastForward
-
-    $scope.stop = () ->
-        player.stop()
-        if $scope.isShow then $location.path('/shows') else $location.path('/')
+    nowPlaying = Player.nowPlaying()
+    if nowPlaying? and nowPlaying.movie? and nowPlaying.movie is $routeParams.id
+        setup()
+    else
+        Movies.play($routeParams.id).then setup, () ->
+            Player.clearCache()
+            $location.path '/movies'
 ]
 
-raspTv.controller 'showsCtrl', ['$scope', 'shows', '$rootScope', '$location', ($scope, shows, $rootScope, $location) ->
-    shows.getAll().then (shows) ->
-        $scope.shows = shows
+raspTv.controller 'playShowCtrl', ['$scope', 'Player', 'show', '$routeParams', 'Shows', '$location', ($scope, Player, show, $routeParams, Shows, $location) ->
+    setup = () ->
+        $scope.isShow = true
+        $scope.isPaused = Player.isPaused()
 
-    $scope.showSeasons = (show) ->
-        shows.setShow show
-        $location.path 'shows/seasons'
+        $scope.playing = show
+        episodeId = parseInt $routeParams.episode, 10
+        for e in show.Episodes
+            if e.Id is episodeId
+                $scope.playing.episode = e
+                break
+
+        $scope.toggle = () ->
+            Player.toggle()
+            $scope.isPaused = Player.isPaused()
+
+        $scope.backward = Player.backward
+        $scope.forward = Player.forward
+        $scope.fastBackward = Player.fastBackward
+        $scope.fastForward = Player.fastForward
+        $scope.stop = () ->
+            Player.stop()
+            $location.path '/shows'
+
+    nowPlaying = Player.nowPlaying()
+    if nowPlaying? and nowPlaying.episode? and nowPlaying.episode is $routeParams.episode
+        setup()
+    else
+        Shows.play($routeParams.episode).then setup, () ->
+            Player.clearCache()
+            $location.path '/shows'
 ]
 
-raspTv.controller 'seasonsCtrl', ['$scope', '$rootScope', '$location', 'shows', 'player', ($scope, $rootScope, $location, shows, player) ->
-    $location.path('shows') if shows.getShow().length is 0
+raspTv.controller 'showsCtrl', ['$scope', 'shows', 'Shows', ($scope, shows, Shows) ->
+    $scope.shows = shows
+    $scope.scan = () ->
+        Shows.scan().then () -> $scope.success = true
 
-    $scope.show = shows.getShow()
+    $scope.close = () -> $scope.success = false
+]
 
-    shows.getSeasons().then (seasons) ->
-        $scope.seasons = seasons
+raspTv.controller 'seasonsCtrl', ['$scope', 'show', '$location', ($scope, show, $location) ->
+    $scope.show = show
 
-    $scope.showEpisodes = (season) ->
-        shows.setSeason season
-        $location.path 'shows/seasons/episodes'
+    $scope.seasons = []
+    for e in show.Episodes when $scope.seasons.indexOf(e.Season.Int64) is -1
+        $scope.seasons.push e.Season.Int64
+
+    $scope.seasons = $scope.seasons.sort()
 
     $scope.random = () ->
-        player.playRandomEpisode($scope.show).then () ->
-            $location.path('play')
+        season = $scope.seasons[Math.floor(Math.random() * $scope.seasons.length)]
+        episodes = (e for e in show.Episodes when e.Season.Int64 is season)
+        episodeId = episodes[Math.floor(Math.random() * episodes.length)].Id
+        $location.path "/shows/#{show.Id}/seasons/#{season}/episodes/#{episodeId}/play"
 ]
 
-raspTv.controller 'episodesCtrl', ['$scope', '$rootScope', '$location', 'shows', 'player', ($scope, $rootScope, $location, shows, player) ->
-    if shows.getSeason().length is 0
-        $location.path 'shows/seasons'
-    else if shows.getShow().length is 0
-        $location.path 'shows'
-
-    $scope.show = shows.getShow()
-    $scope.season = shows.getSeason()
-
-    shows.getEpisodes().then (episodes) ->
-        $scope.episodes = episodes
-
-    $scope.play = (episode) ->
-        player.playShow($scope.show, $scope.season, episode).then () ->
-            shows.setEpisode episode.name
-            $location.path 'play'
+raspTv.controller 'episodesCtrl', ['$scope', 'show', '$routeParams', '$location', ($scope, show, $routeParams, $location) ->
+    $scope.show = show
+    $scope.season = parseInt $routeParams.season, 10
+    $scope.episodes = (e for e in show.Episodes when e.Season.Int64 is $scope.season).sort (a, b) ->
+        a.Number.Int64 - b.Number.Int64
 
     $scope.random = () ->
-        episode = $scope.episodes[Math.floor(Math.random() * $scope.episodes.length)]
-        player.playShow($scope.show, $scope.season, episode).then () ->
-            shows.setEpisode episode.name
-            $location.path 'play'
+        episodeId = $scope.episodes[Math.floor(Math.random() * $scope.episodes.length)].Id
+        $location.path "/shows/#{show.Id}/seasons/#{$scope.season}/episodes/#{episodeId}/play"
+]
+
+raspTv.controller 'editCtrl', ['$scope', 'nonIndexedMovies', 'nonIndexedEpisodes', ($scope, movies, episodes) ->
+    $scope.movies = movies
+    $scope.episodes = episodes
+]
+raspTv.controller 'editMovieCtrl', ['$scope', 'movie', 'Movies', '$location', ($scope, movie, Movies, $location) ->
+    $scope.movie = movie
+
+    $scope.save = () ->
+        $scope.movie.Title.Valid = true
+        Movies.save($scope.movie).then () ->
+            $location.path '/edit'
+]
+raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$location', ($scope, episode, shows, Shows, $location) ->
+    $scope.episode = episode
+    $scope.shows = shows
+
+    $scope.saveShow = () ->
+        Shows.add($scope.show).then () ->
+            Shows.getAll().then (shows) ->
+                $scope.shows = shows
+                $scope.show = ''
+
+    $scope.saveEpisode = () ->
+        $scope.episode.Title.Valid = true
+        $scope.episode.Number.Int64 = parseInt $scope.episode.Number.Int64, 10
+        $scope.episode.Number.Valid = true
+        $scope.episode.Season.Int64 = parseInt $scope.episode.Season.Int64, 10
+        $scope.episode.Season.Valid = true
+        $scope.episode.ShowId.Int64 = parseInt $scope.episode.ShowId.Int64, 10
+        $scope.episode.ShowId.Valid = true
+        Shows.saveEpisode($scope.episode).then () ->
+            $location.path '/edit'
 ]

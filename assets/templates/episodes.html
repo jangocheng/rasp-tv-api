@@ -1,0 +1,18 @@
+<div class="row">
+    <div class="col-xs-12">
+        <h2>{{show.Title}} - Season {{season}}</h2>
+        <button type="button" ng-click="random()" class="btn btn-default btn-block">
+            <span class="glyphicon glyphicon-random"></span>
+        </button>
+    </div>
+</div>
+<br/>
+<div class="row">
+    <div class="col-xs-12">
+        <ul ng-if="show.Episodes" class="list-group">
+            <a ng-repeat="e in episodes" ng-href="#/shows/{{show.Id}}/seasons/{{season}}/episodes/{{e.Id}}/play" class="list-group-item">
+                {{e.Number.Int64}} - {{e.Title.String}}
+            </a>
+        </ul>
+    </div>
+</div>
