@@ -1,7 +1,6 @@
-node_modules
-app.js
-routes/*.js
 assets/js/*.js
-assets/templates/*.html
 .DS_Store
 videos
+rasp-tv
+logs.txt
+raspTv.db

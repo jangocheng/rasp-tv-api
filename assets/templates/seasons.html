@@ -1,0 +1,18 @@
+<div class="row">
+    <div class="col-xs-12">
+        <h2>{{show.Title}}</h2>
+        <button type="button" ng-click="random()" class="btn btn-default btn-block">
+            <span class="glyphicon glyphicon-random"></span>
+        </button>
+    </div>
+</div>
+<br/>
+<div class="row">
+    <div class="col-xs-12">
+        <ul ng-if="show.Episodes" class="list-group">
+            <a ng-repeat="season in seasons track by $index" ng-href="#/shows/{{show.Id}}/seasons/{{season}}/episodes" class="list-group-item">
+                Season {{season}}
+            </a>
+        </ul>
+    </div>
+</div>

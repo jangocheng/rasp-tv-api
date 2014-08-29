@@ -1,0 +1,33 @@
+<div class="row" ng-if="success">
+    <div class="col-xs-12">
+        <div class="alert alert-success alert-dismissable">
+            <button type="button" ng-click="close()" class="close">&times;</button>
+            <strong>Success!</strong>
+        </div>
+    </div>
+</div>
+<br>
+<div class="row">
+    <div class="col-xs-12">
+        <button class="btn btn-default btn-block" ng-click="scan()" title="Scan">
+            <span class="glyphicon glyphicon-search"></span>
+        </button>
+    </div>
+</div>
+<br>
+<div class="row">
+    <div class="col-xs-12">
+        <input type="text" ng-model="title" placeholder="Search" class="form-control"/>
+    </div>
+</div>
+<br/>
+<div class="row">
+    <div class="col-xs-12">
+        <p ng-if="movies.length === 0">No indexed movies</p>
+        <ul ng-if="movies" class="list-group">
+            <a ng-href="#/movies/{{movie.Id}}/mode" ng-repeat="movie in movies | filter:title track by movie.Id" class="list-group-item">
+                {{movie.Title.String}}
+            </a>
+        </ul>
+    </div>
+</div>
