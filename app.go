@@ -26,6 +26,7 @@ func getConfig() (*api.Config, error) {
 			IsProduction: martini.Env == "production",
 			LogPath:      "logs.txt",
 			DbPath:       "raspTv.db",
+			Root:         "/Users/Joe/Projects/go/src/simongeeks.com/joe/rasp-tv",
 		}, nil
 	case "Joe": // raspberry pi
 		return &api.Config{
@@ -34,6 +35,7 @@ func getConfig() (*api.Config, error) {
 			IsProduction: martini.Env == "production",
 			LogPath:      "/var/log/rasp-tv/logs.txt",
 			DbPath:       "/home/joe/data/raspTv.db",
+			Root:         "/home/joe/go/src/simongeeks.com/joe/rasp-tv",
 		}, nil
 	}
 
@@ -62,9 +64,8 @@ func main() {
 
 	m := martini.New()
 	m.Use(martini.Recovery())
-	// m.Use(martini.Logger())
-	m.Use(martini.Static("assets"))
-	m.Use(render.Renderer(render.Options{Delims: render.Delims{"[[", "]]"}, Directory: "views"}))
+	m.Use(martini.Static(config.Root + "/assets"))
+	m.Use(render.Renderer(render.Options{Delims: render.Delims{"[[", "]]"}, Directory: config.Root + "/views"}))
 	m.Map(db)
 	m.Map(logger)
 	m.Map(config)
@@ -80,6 +81,7 @@ func main() {
 	router.Group("/movies", func(r martini.Router) {
 		r.Get("/:id", api.GetMovie)
 		r.Get("/:id/play", api.PlayMovie)
+		r.Get("/:id/stream", api.StreamMovie)
 		r.Post("/:id", api.SaveMovie)
 	})
 	router.Get("/shows", api.GetShows)
@@ -89,6 +91,7 @@ func main() {
 		r.Group("/episodes", func(episodeRouter martini.Router) {
 			episodeRouter.Get("/:id", api.GetEpisode)
 			episodeRouter.Get("/:id/play", api.PlayEpisode)
+			episodeRouter.Get("/:id/stream", api.StreamEpisode)
 			episodeRouter.Post("/:id", api.SaveEpisode)
 		})
 	})

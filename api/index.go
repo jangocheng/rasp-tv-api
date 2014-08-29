@@ -10,6 +10,7 @@ type Config struct {
 	IsProduction bool
 	LogPath      string
 	DbPath       string
+	Root         string
 }
 
 func Index(r render.Render, config *Config) {

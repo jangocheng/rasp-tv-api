@@ -132,6 +132,25 @@ func PlayEpisode(r render.Render, params martini.Params, db *sql.DB, logger *log
 	r.JSON(200, fmt.Sprintf("Playing episode at %s", episodes[0].Filepath))
 }
 
+func StreamEpisode(r render.Render, params martini.Params, res http.ResponseWriter, req *http.Request, db *sql.DB, logger *log.Logger) {
+	episodes, err := getEpisodesFromDb("WHERE id = "+params["id"], db)
+
+	if err != nil {
+		logger.Println(errorMsg(err.Error()))
+		r.JSON(500, map[string]string{"error": err.Error()})
+		return
+	}
+
+	if len(episodes) != 1 {
+		msg := "Could not find episode with id: " + params["id"]
+		logger.Println(errorMsg(msg))
+		r.JSON(404, map[string]string{"error": msg})
+		return
+	}
+
+	http.ServeFile(res, req, episodes[0].Filepath)
+}
+
 func AddShow(r render.Render, req *http.Request, db *sql.DB, logger *log.Logger) {
 	show := Show{}
 	decoder := json.NewDecoder(req.Body)

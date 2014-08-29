@@ -17,6 +17,12 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
             movie : ['$route', 'Movies', ($route, Movies) ->
                 Movies.get $route.current.params.id
             ]
+    $routeProvider.when '/movies/:id/mode',
+        templateUrl : '/templates/mode.html'
+        controller : 'modeCtrl'
+    $routeProvider.when '/movies/:id/stream',
+        templateUrl : '/templates/stream.html'
+        controller : 'streamCtrl'
     $routeProvider.when '/shows',
         templateUrl : '/templates/shows.html'
         controller : 'showsCtrl'
@@ -45,6 +51,12 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
             show : ['$route', 'Shows', ($route, Shows) ->
                 Shows.get $route.current.params.id
             ]
+    $routeProvider.when '/shows/:id/seasons/:season/episodes/:episode/mode',
+        templateUrl : '/templates/mode.html'
+        controller : 'modeCtrl'
+    $routeProvider.when '/shows/:id/seasons/:season/episodes/:episode/stream',
+        templateUrl : '/templates/stream.html'
+        controller : 'streamCtrl'
     $routeProvider.when '/edit',
         templateUrl : '/templates/edit.html'
         controller : 'editCtrl'
@@ -80,8 +92,16 @@ raspTv.controller 'navCtrl', ['$scope', '$location', 'Player', ($scope, $locatio
     $scope.isPlaying = Player.isPlaying()
 
     $scope.isActive = (page) ->
-        regex = new RegExp "#{page}", 'i'
-        regex.test $location.path()
+        if page is 'movies' and /^\/movies/.test($location.path()) and not /play$/.test($location.path())
+            true
+        else if page is 'shows' and /^\/shows/.test($location.path()) and not /play$/.test($location.path())
+            true
+        else if page is 'play' and /play$/.test($location.path())
+            true
+        else if page is 'edit' and /^\/edit/.test($location.path())
+            true
+        else
+            false
 
     setUpLink = () ->
         nowPlaying = Player.nowPlaying()
@@ -104,6 +124,13 @@ raspTv.controller 'errorCtrl', ['$scope', '$rootScope', ($scope, $rootScope) ->
     $scope.$on 'httpError', (event, err) -> $scope.error = err
 
     $scope.close = () -> $scope.error = null
+]
+
+raspTv.controller 'streamCtrl', ['$scope', '$routeParams', ($scope, $routeParams) ->
+    if $routeParams.episode?
+        $scope.src = "/shows/episodes/#{$routeParams.episode}/stream"
+    else
+        $scope.src = "/movies/#{$routeParams.id}/stream"
 ]
 
 raspTv.controller 'movieCtrl', ['$scope', 'movies', 'Movies', ($scope, movies, Movies) ->
@@ -140,6 +167,13 @@ raspTv.controller 'playMovieCtrl', ['$scope', 'Player', 'movie', 'Movies', '$rou
         Movies.play($routeParams.id).then setup, () ->
             Player.clearCache()
             $location.path '/movies'
+]
+
+raspTv.controller 'modeCtrl', ['$scope', '$routeParams', ($scope, $routeParams) ->
+    if $routeParams.episode?
+        $scope.href = "#/shows/#{$routeParams.id}/seasons/#{$routeParams.season}/episodes/#{$routeParams.episode}"
+    else
+        $scope.href = "#/movies/#{$routeParams.id}"
 ]
 
 raspTv.controller 'playShowCtrl', ['$scope', 'Player', 'show', '$routeParams', 'Shows', '$location', ($scope, Player, show, $routeParams, Shows, $location) ->
@@ -196,7 +230,7 @@ raspTv.controller 'seasonsCtrl', ['$scope', 'show', '$location', ($scope, show, 
         season = $scope.seasons[Math.floor(Math.random() * $scope.seasons.length)]
         episodes = (e for e in show.Episodes when e.Season.Int64 is season)
         episodeId = episodes[Math.floor(Math.random() * episodes.length)].Id
-        $location.path "/shows/#{show.Id}/seasons/#{season}/episodes/#{episodeId}/play"
+        $location.path "/shows/#{show.Id}/seasons/#{season}/episodes/#{episodeId}/mode"
 ]
 
 raspTv.controller 'episodesCtrl', ['$scope', 'show', '$routeParams', '$location', ($scope, show, $routeParams, $location) ->
@@ -207,7 +241,7 @@ raspTv.controller 'episodesCtrl', ['$scope', 'show', '$routeParams', '$location'
 
     $scope.random = () ->
         episodeId = $scope.episodes[Math.floor(Math.random() * $scope.episodes.length)].Id
-        $location.path "/shows/#{show.Id}/seasons/#{$scope.season}/episodes/#{episodeId}/play"
+        $location.path "/shows/#{show.Id}/seasons/#{$scope.season}/episodes/#{episodeId}/mode"
 ]
 
 raspTv.controller 'editCtrl', ['$scope', 'nonIndexedMovies', 'nonIndexedEpisodes', ($scope, movies, episodes) ->

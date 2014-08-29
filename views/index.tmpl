@@ -25,16 +25,16 @@
             <div ng-controller="navCtrl" class="row">
                 <div class="col-xs-12">
                     <ul class="nav nav-pills nav-justified">
-                        <li ng-class="{active : isActive('^/movies$')}">
+                        <li ng-class="{active : isActive('movies')}">
                             <a href="#/">Movies</a>
                         </li>
-                        <li ng-class="{active : isActive('^/shows.*?')}">
+                        <li ng-class="{active : isActive('shows')}">
                             <a href="#/shows">TV Shows</a>
                         </li>
-                        <li ng-class="{active : isActive('^/edit.*?')}">
+                        <li ng-class="{active : isActive('edit')}">
                             <a href="#/edit">Edit</a>
                         </li>
-                        <li ng-class="{active : isActive('play$')}" ng-show="isPlaying">
+                        <li ng-class="{active : isActive('play')}" ng-show="isPlaying">
                             <a ng-href="{{nowPlayingLink}}">Now Playing</a>
                         </li>
                     </ul>

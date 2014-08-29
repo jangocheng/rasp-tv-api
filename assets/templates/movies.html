@@ -25,7 +25,7 @@
     <div class="col-xs-12">
         <p ng-if="movies.length === 0">No indexed movies</p>
         <ul ng-if="movies" class="list-group">
-            <a ng-href="#/movies/{{movie.Id}}/play" ng-repeat="movie in movies | filter:title track by movie.Id" class="list-group-item">
+            <a ng-href="#/movies/{{movie.Id}}/mode" ng-repeat="movie in movies | filter:title track by movie.Id" class="list-group-item">
                 {{movie.Title.String}}
             </a>
         </ul>

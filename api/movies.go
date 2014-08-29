@@ -114,6 +114,25 @@ func PlayMovie(r render.Render, params martini.Params, db *sql.DB, logger *log.L
 	r.JSON(200, fmt.Sprintf("Playing movie at %s", movies[0].Filepath))
 }
 
+func StreamMovie(r render.Render, params martini.Params, res http.ResponseWriter, req *http.Request, db *sql.DB, logger *log.Logger) {
+	movies, err := getMoviesFromDb("WHERE id = "+params["id"], db)
+
+	if err != nil {
+		logger.Println(errorMsg(err.Error()))
+		r.JSON(500, map[string]string{"error": err.Error()})
+		return
+	}
+
+	if len(movies) != 1 {
+		msg := "Could not find movie with id: " + params["id"]
+		logger.Println(errorMsg(msg))
+		r.JSON(404, map[string]string{"error": msg})
+		return
+	}
+
+	http.ServeFile(res, req, movies[0].Filepath)
+}
+
 func getMoviesFromDb(filter string, db *sql.DB) ([]Movie, error) {
 	movies := make([]Movie, 0, 70)
 	rows, err := db.Query("SELECT id, title, filepath, length, isIndexed FROM movies " + filter)
