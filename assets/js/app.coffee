@@ -20,9 +20,17 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
     $routeProvider.when '/movies/:id/mode',
         templateUrl : '/templates/mode.html'
         controller : 'modeCtrl'
+        resolve :
+            title : ['$route', 'Movies', ($route, Movies) ->
+                Movies.get($route.current.params.id).then (movie) -> movie.Title.String
+            ]
     $routeProvider.when '/movies/:id/stream',
         templateUrl : '/templates/stream.html'
         controller : 'streamCtrl'
+        resolve :
+            title : ['$route', 'Movies', ($route, Movies) ->
+                Movies.get($route.current.params.id).then (movie) -> movie.Title.String
+            ]
     $routeProvider.when '/shows',
         templateUrl : '/templates/shows.html'
         controller : 'showsCtrl'
@@ -54,9 +62,21 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
     $routeProvider.when '/shows/:id/seasons/:season/episodes/:episode/mode',
         templateUrl : '/templates/mode.html'
         controller : 'modeCtrl'
+        resolve :
+            title : ['$route', 'Shows', ($route, Shows) ->
+                Shows.get($route.current.params.id).then (show) ->
+                    episode = Shows.getEpisodeFromShow show, parseInt($route.current.params.episode, 10)
+                    "#{show.Title} - #{episode.Season.Int64} - #{episode.Title.String}"
+            ]
     $routeProvider.when '/shows/:id/seasons/:season/episodes/:episode/stream',
         templateUrl : '/templates/stream.html'
         controller : 'streamCtrl'
+        resolve :
+            title : ['$route', 'Shows', ($route, Shows) ->
+                Shows.get($route.current.params.id).then (show) ->
+                    episode = Shows.getEpisodeFromShow show, parseInt($route.current.params.episode, 10)
+                    "#{show.Title} - #{episode.Season.Int64} - #{episode.Title.String}"
+            ]
     $routeProvider.when '/edit',
         templateUrl : '/templates/edit.html'
         controller : 'editCtrl'
@@ -135,7 +155,8 @@ raspTv.controller 'errorCtrl', ['$scope', '$rootScope', ($scope, $rootScope) ->
         $scope.error = null
 ]
 
-raspTv.controller 'streamCtrl', ['$scope', '$routeParams', ($scope, $routeParams) ->
+raspTv.controller 'streamCtrl', ['$scope', '$routeParams', 'title', ($scope, $routeParams, title) ->
+    $scope.title = title
     if $routeParams.episode?
         $scope.src = "/shows/episodes/#{$routeParams.episode}/stream"
     else
@@ -178,7 +199,8 @@ raspTv.controller 'playMovieCtrl', ['$scope', 'Player', 'movie', 'Movies', '$rou
             $location.path '/movies'
 ]
 
-raspTv.controller 'modeCtrl', ['$scope', '$routeParams', ($scope, $routeParams) ->
+raspTv.controller 'modeCtrl', ['$scope', '$routeParams', 'title', ($scope, $routeParams, title) ->
+    $scope.title = title
     if $routeParams.episode?
         $scope.href = "#/shows/#{$routeParams.id}/seasons/#{$routeParams.season}/episodes/#{$routeParams.episode}"
     else
@@ -197,10 +219,7 @@ raspTv.controller 'playShowCtrl', ['$scope', 'Player', 'show', '$routeParams', '
 
         $scope.playing = show
         episodeId = parseInt $routeParams.episode, 10
-        for e in show.Episodes
-            if e.Id is episodeId
-                $scope.playing.episode = e
-                break
+        $scope.playing.episode = Shows.getEpisodeFromShow show, episodeId
 
         $scope.toggle = () ->
             Player.toggle()

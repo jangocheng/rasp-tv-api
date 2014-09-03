@@ -108,6 +108,11 @@ services.factory 'Shows', ['$resource', '$rootScope', 'Player', '$route', '$q', 
     api.scan = () ->
         Shows.scan().$promise
 
+    api.getEpisodeFromShow = (show, episodeId) ->
+        for e in show.Episodes
+            if e.Id is episodeId
+                return e
+
     return api
 ]
 
