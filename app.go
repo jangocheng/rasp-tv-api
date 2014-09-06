@@ -64,7 +64,7 @@ func main() {
 
 	m := martini.New()
 	m.Use(martini.Recovery())
-	m.Use(martini.Static(config.Root + "/assets"))
+	m.Use(martini.Static(config.Root+"/assets", martini.StaticOptions{SkipLogging: true}))
 	m.Use(render.Renderer(render.Options{Delims: render.Delims{"[[", "]]"}, Directory: config.Root + "/views"}))
 	m.Map(db)
 	m.Map(logger)

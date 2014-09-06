@@ -38,6 +38,11 @@ func RunPlayerCommand(r render.Render, params martini.Params, logger *log.Logger
 	}
 
 	cmd, err := strconv.Atoi(params["command"])
+	if err != nil {
+		logger.Println(errorMsg(err.Error()))
+		r.JSON(500, map[string]string{"error": err.Error()})
+	}
+
 	switch cmd {
 	case 0:
 		_, err = fmt.Fprint(pipe, "p")
