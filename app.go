@@ -83,6 +83,7 @@ func main() {
 		r.Get("/:id/play", api.PlayMovie)
 		r.Get("/:id/stream", api.StreamMovie)
 		r.Post("/:id", api.SaveMovie)
+		r.Delete("/:id", api.DeleteMovie)
 	})
 	router.Get("/shows", api.GetShows)
 	router.Group("/shows", func(r martini.Router) {
@@ -93,12 +94,13 @@ func main() {
 			episodeRouter.Get("/:id/play", api.PlayEpisode)
 			episodeRouter.Get("/:id/stream", api.StreamEpisode)
 			episodeRouter.Post("/:id", api.SaveEpisode)
+			episodeRouter.Delete("/:id", api.DeleteEpisode)
 		})
 	})
 
 	router.Get("/episodes", api.GetAllEpisodes)
 	router.Get("/player/:command", api.RunPlayerCommand)
-	router.Get("/auto", api.AutoIndex)
+	// router.Get("/auto", api.AutoIndex)
 
 	m.Action(router.Handle)
 	m.Run()

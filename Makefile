@@ -1,6 +1,6 @@
 JSDIR=assets/js
 EXCLUDES=--exclude=".git*" --exclude="assets/js/*.coffee" --exclude="LICENSE" --exclude="README.md" --exclude="rasp-tv" --exclude="raspTv.db" --exclude="logs.txt"
-JSLIBS=$(JSDIR)/libs/angular.js $(JSDIR)/libs/angular-animate.js $(JSDIR)/libs/angular-route.js $(JSDIR)/libs/angular-resource.js $(JSDIR)/libs/loading-bar.js
+JSLIBS=$(JSDIR)/libs/angular.js $(JSDIR)/libs/angular-animate.js $(JSDIR)/libs/angular-route.js $(JSDIR)/libs/angular-resource.js $(JSDIR)/libs/loading-bar.js $(JSDIR)/libs/angular-strap.js $(JSDIR)/libs/angular-strap.tpl.js
 
 .PHONY: clean watch
 

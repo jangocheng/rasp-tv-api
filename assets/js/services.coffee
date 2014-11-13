@@ -11,9 +11,11 @@ services.constant 'playerCommands',
 services.factory 'errorInterceptor', ['$q', '$rootScope', ($q, $rootScope) ->
 
     broadcastError = (err) ->
-        $rootScope.$broadcast 'httpError', err
+        $rootScope.$broadcast 'alert',
+            type : 'error'
+            title  : "Error: #{err.config.method} #{err.status} #{err.config.url}"
+            msg : err.data.error
         $q.reject err
-
     {
         'requestError'  : broadcastError
         'responseError' : broadcastError
@@ -46,6 +48,9 @@ services.factory 'Movies', ['$resource', '$rootScope', 'Player', ($resource, $ro
             Player.nowPlaying {movie : id}
             $rootScope.$broadcast 'play'
 
+    api.delete = (id) ->
+        Movies.delete({id : id}).$promise
+
     api.scan = () ->
         Movies.scan().$promise
 
@@ -77,6 +82,10 @@ services.factory 'Shows', ['$resource', '$rootScope', 'Player', '$route', '$q', 
         scan :
             method : 'GET'
             url : '/scan/episodes'
+        deleteEpisode :
+            method: 'DELETE'
+            url : '/shows/episodes/:id'
+            params : {id : '@id'}
 
     api.getAll = () ->
         Shows.query().$promise
@@ -112,6 +121,9 @@ services.factory 'Shows', ['$resource', '$rootScope', 'Player', '$route', '$q', 
         for e in show.Episodes
             if e.Id is episodeId
                 return e
+
+    api.deleteEpisode = (id) ->
+        Shows.deleteEpisode({id : id}).$promise
 
     return api
 ]

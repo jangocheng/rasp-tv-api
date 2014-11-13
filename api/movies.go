@@ -11,13 +11,14 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type Movie struct {
 	Id        int64
 	Title     sql.NullString
 	Filepath  string
-	Length    float64
+	Length    sql.NullFloat64
 	IsIndexed bool
 }
 
@@ -133,6 +134,24 @@ func StreamMovie(r render.Render, params martini.Params, res http.ResponseWriter
 	http.ServeFile(res, req, movies[0].Filepath)
 }
 
+func DeleteMovie(r render.Render, params martini.Params, db *sql.DB, logger *log.Logger) {
+	id, err := strconv.ParseInt(params["id"], 10, 64)
+	if err != nil {
+		logger.Println(errorMsg(err.Error()))
+		r.JSON(500, map[string]string{"error": err.Error()})
+		return
+	}
+
+	_, err = db.Exec(fmt.Sprintf("DELETE FROM movies WHERE Id = %d", id))
+	if err != nil {
+		logger.Println(errorMsg(err.Error()))
+		r.JSON(500, map[string]string{"error": err.Error()})
+		return
+	}
+
+	r.JSON(200, "Deleted movie")
+}
+
 func getMoviesFromDb(filter string, db *sql.DB) ([]Movie, error) {
 	movies := make([]Movie, 0, 70)
 	rows, err := db.Query("SELECT id, title, filepath, length, isIndexed FROM movies " + filter)
@@ -147,7 +166,9 @@ func getMoviesFromDb(filter string, db *sql.DB) ([]Movie, error) {
 
 	for rows.Next() {
 		m := Movie{}
-		rows.Scan(&m.Id, &m.Title, &m.Filepath, &m.Length, &m.IsIndexed)
+		if err := rows.Scan(&m.Id, &m.Title, &m.Filepath, &m.Length, &m.IsIndexed); err != nil {
+			return nil, err
+		}
 		movies = append(movies, m)
 	}
 

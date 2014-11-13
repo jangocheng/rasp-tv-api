@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type Show struct {
@@ -42,7 +43,7 @@ type Episode struct {
 	Number    sql.NullInt64
 	Season    sql.NullInt64
 	Filepath  string
-	Length    float64
+	Length    sql.NullFloat64
 	IsIndexed bool
 }
 
@@ -151,6 +152,24 @@ func StreamEpisode(r render.Render, params martini.Params, res http.ResponseWrit
 	http.ServeFile(res, req, episodes[0].Filepath)
 }
 
+func DeleteEpisode(r render.Render, params martini.Params, db *sql.DB, logger *log.Logger) {
+	id, err := strconv.ParseInt(params["id"], 10, 64)
+	if err != nil {
+		logger.Println(errorMsg(err.Error()))
+		r.JSON(500, map[string]string{"error": err.Error()})
+		return
+	}
+
+	_, err = db.Exec(fmt.Sprintf("DELETE FROM episodes WHERE Id = %d;", id))
+	if err != nil {
+		logger.Println(errorMsg(err.Error()))
+		r.JSON(500, map[string]string{"error": err.Error()})
+		return
+	}
+
+	r.JSON(200, "Deleted episode")
+}
+
 func AddShow(r render.Render, req *http.Request, db *sql.DB, logger *log.Logger) {
 	show := Show{}
 	decoder := json.NewDecoder(req.Body)
@@ -251,7 +270,7 @@ func getShowsFromDb(filter string, db *sql.DB) ([]Show, error) {
 
 func getEpisodesFromDb(filter string, db *sql.DB) ([]Episode, error) {
 	episodes := make([]Episode, 0, 20)
-	rows, err := db.Query("SELECT id, title, episodeNumber, season, filepath, length, isIndexed FROM episodes " + filter)
+	rows, err := db.Query("SELECT id, title, episodeNumber, season, filepath, length, isIndexed, showId FROM episodes " + filter)
 	if err != nil && err != io.EOF {
 		return nil, err
 	}
@@ -263,7 +282,9 @@ func getEpisodesFromDb(filter string, db *sql.DB) ([]Episode, error) {
 
 	for rows.Next() {
 		e := Episode{}
-		rows.Scan(&e.Id, &e.Title, &e.Number, &e.Season, &e.Filepath, &e.Length, &e.IsIndexed)
+		if err := rows.Scan(&e.Id, &e.Title, &e.Number, &e.Season, &e.Filepath, &e.Length, &e.IsIndexed, &e.ShowId); err != nil {
+			return nil, err
+		}
 		episodes = append(episodes, e)
 	}
 

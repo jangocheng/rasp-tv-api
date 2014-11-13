@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title></title>
+        <title>Rasp TV</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="/styles/libs/bootstrap.min.css" rel="stylesheet">
         <link href="/styles/libs/loading-bar.min.css" rel="stylesheet">
@@ -17,6 +17,12 @@
 
             .main-view {
                     margin-top: 3%;
+            }
+            .clickable {
+                cursor: pointer;
+            }
+            .no-underline:hover {
+                text-decoration: none
             }
         </style>
     </head>
@@ -40,12 +46,12 @@
                     </ul>
                 </div>
             </div>
-            <div ng-controller="errorCtrl" ng-show="error" class="row error-message">
+            <div ng-controller="alertCtrl" ng-show="alert" class="row error-message">
                 <div class="col-xs-12">
-                    <div class="alert alert-danger alert-dismissable">
+                    <div class="alert alert-dismissable" ng-class="{'alert-danger' : alert.type === 'error', 'alert-success': alert.type === 'success'}">
                         <button type="button" ng-click="close()" class="close">&times;</button>
-                        <strong>Error: {{error.config.method}} {{error.status}} {{error.config.url}}</strong>
-                        <br> {{error.data.error}}
+                        <strong>{{alert.title}}</strong>
+                        <br> {{alert.msg}}
                     </div>
                 </div>
             </div>
@@ -57,6 +63,8 @@
             <script type="text/javascript" src="/js/libs/angular-animate.js"></script>
             <script type="text/javascript" src="/js/libs/angular-route.js"></script>
             <script type="text/javascript" src="/js/libs/angular-resource.js"></script>
+            <script type="text/javascript" src="/js/libs/angular-strap.js"></script>
+            <script type="text/javascript" src="/js/libs/angular-strap.tpl.js"></script>
             <script type="text/javascript" src="/js/libs/loading-bar.js"></script>
             <script type="text/javascript" src="/js/services.js"></script>
             <script type="text/javascript" src="/js/app.js"></script>

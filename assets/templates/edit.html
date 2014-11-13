@@ -1,9 +1,14 @@
 <div class="row">
     <div class="col-xs-12">
+        <input type="text" ng-model="search" placeholder="Search" class="form-control"/>
+    </div>
+</div>
+<div class="row">
+    <div class="col-xs-12">
         <h2>Movies</h2>
         <p ng-if="movies.length === 0">No movies to be indexed</p>
         <ul ng-if="movies" class="list-group">
-            <a ng-href="#/edit/movie/{{movie.Id}}" ng-repeat="movie in movies track by movie.Id" class="list-group-item">
+            <a ng-href="#/edit/movie/{{movie.Id}}" ng-repeat="movie in movies | filter:search track by movie.Id" class="list-group-item">
                 {{movie.Filepath}}
             </a>
         </ul>
@@ -14,7 +19,7 @@
         <h2>Episodes</h2>
         <p ng-if="episodes.length === 0">No episodes to be indexed</p>
         <ul ng-if="episodes" class="list-group">
-            <a ng-href="#/edit/episode/{{episode.Id}}" ng-repeat="episode in episodes track by episode.Id" class="list-group-item">
+            <a ng-href="#/edit/episode/{{episode.Id}}" ng-repeat="episode in episodes | filter:search track by episode.Id" class="list-group-item">
                 {{episode.Filepath}}
             </a>
         </ul>

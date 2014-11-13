@@ -10,7 +10,8 @@
                     <input type="text" placeholder="Title" name="title" ng-model="movie.Title.String" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <input type="submit" class="btn btn-primary btn-block" ng-disabled="editMovieForm.$invalid">
+                    <input type="submit" class="btn btn-primary btn-block" ng-disabled="editMovieForm.$invalid" value="Update">
+                    <button type="button" class="btn btn-danger btn-block" ng-click="deleteMovie()">Delete</button>
                 </div>
             </fieldset>
         </form>

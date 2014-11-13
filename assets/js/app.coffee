@@ -1,4 +1,4 @@
-raspTv = angular.module 'raspTv', ['ngRoute', 'ngAnimate', 'angular-loading-bar', 'ngResource', 'raspTv.services']
+raspTv = angular.module 'raspTv', ['ngRoute', 'ngAnimate', 'angular-loading-bar', 'ngResource', 'mgcrea.ngStrap', 'raspTv.services']
 
 raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider) ->
     $httpProvider.interceptors.push 'errorInterceptor'
@@ -36,7 +36,7 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
         controller : 'showsCtrl'
         resolve :
             shows : ['Shows', (Shows) ->
-                Shows.getAll true
+                Shows.getAll()
             ]
     $routeProvider.when '/shows/:id/seasons',
         templateUrl : '/templates/seasons.html'
@@ -102,7 +102,7 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
                 Shows.getEpisode $route.current.params.id
             ]
             shows : ['Shows', (Shows) ->
-                Shows.getAll false
+                Shows.getAll()
             ]
     $routeProvider.otherwise
         redirectTo : '/movies'
@@ -139,20 +139,12 @@ raspTv.controller 'navCtrl', ['$scope', '$location', 'Player', ($scope, $locatio
     setUpLink()
 ]
 
-raspTv.controller 'errorCtrl', ['$scope', '$rootScope', ($scope, $rootScope) ->
+raspTv.controller 'alertCtrl', ['$scope', '$rootScope', ($scope, $rootScope) ->
 
-    $scope.$on 'httpError', (event, err) -> $scope.error = err
+    $rootScope.$on 'alert', (event, alert) ->
+        $scope.alert = alert
 
-    $scope.close = () -> $scope.error = null
-]
-
-raspTv.controller 'errorCtrl', ['$scope', '$rootScope', ($scope, $rootScope) ->
-
-    $rootScope.$on 'httpError', (event, err) ->
-        $scope.error = err
-
-    $scope.close = () ->
-        $scope.error = null
+    $scope.close = () -> $scope.alert = null
 ]
 
 raspTv.controller 'streamCtrl', ['$scope', '$routeParams', 'title', ($scope, $routeParams, title) ->
@@ -165,11 +157,13 @@ raspTv.controller 'streamCtrl', ['$scope', '$routeParams', 'title', ($scope, $ro
 
 raspTv.controller 'movieCtrl', ['$scope', 'movies', 'Movies', ($scope, movies, Movies) ->
     $scope.movies = movies
+    $scope.activePanel = -1
 
     $scope.scan = () ->
-        Movies.scan().then () -> $scope.success = true
-
-    $scope.close = () -> $scope.success = false
+        Movies.scan().then () ->
+            $scope.$emit 'alert',
+                type : 'success'
+                title : 'Success!'
 ]
 
 raspTv.controller 'playMovieCtrl', ['$scope', 'Player', 'movie', 'Movies', '$routeParams', '$location', ($scope, Player, movie, Movies, $routeParams, $location) ->
@@ -208,8 +202,7 @@ raspTv.controller 'modeCtrl', ['$scope', '$routeParams', 'title', ($scope, $rout
 ]
 
 raspTv.controller 'showsCtrl', ['$scope', 'shows', '$rootScope', '$location', ($scope, shows, $rootScope, $location) ->
-    shows.getAll().then (shows) ->
-        $scope.shows = shows
+    shows.getAll().then (shows) -> $scope.shows = shows
 ]
 
 raspTv.controller 'playShowCtrl', ['$scope', 'Player', 'show', '$routeParams', 'Shows', '$location', ($scope, Player, show, $routeParams, Shows, $location) ->
@@ -244,10 +237,12 @@ raspTv.controller 'playShowCtrl', ['$scope', 'Player', 'show', '$routeParams', '
 
 raspTv.controller 'showsCtrl', ['$scope', 'shows', 'Shows', ($scope, shows, Shows) ->
     $scope.shows = shows
-    $scope.scan = () ->
-        Shows.scan().then () -> $scope.success = true
 
-    $scope.close = () -> $scope.success = false
+    $scope.scan = () ->
+        Shows.scan().then () ->
+            $scope.$emit 'alert',
+                type : 'success'
+                title : 'Success!'
 ]
 
 raspTv.controller 'seasonsCtrl', ['$scope', 'show', '$location', ($scope, show, $location) ->
@@ -281,23 +276,44 @@ raspTv.controller 'editCtrl', ['$scope', 'nonIndexedMovies', 'nonIndexedEpisodes
     $scope.movies = movies
     $scope.episodes = episodes
 ]
-raspTv.controller 'editMovieCtrl', ['$scope', 'movie', 'Movies', '$location', ($scope, movie, Movies, $location) ->
+raspTv.controller 'editMovieCtrl', ['$scope', 'movie', 'Movies', '$location', '$window', ($scope, movie, Movies, $location, $window) ->
     $scope.movie = movie
+
+    if not $scope.movie.IsIndexed
+        $scope.movie.Title.String = $scope.movie.Filepath.substring($scope.movie.Filepath.lastIndexOf('/') + 1)
 
     $scope.save = () ->
         $scope.movie.Title.Valid = true
         Movies.save($scope.movie).then () ->
-            $location.path '/edit'
+            $scope.$emit 'alert',
+                type : 'success'
+                title : 'Success!'
+                msg : "#{$scope.movie.Title.String} was updated."
+            if not $scope.movie.IsIndexed then $location.path('/edit')
+
+
+    $scope.deleteMovie = () ->
+        if $window.confirm('Are you sure you want to delete this movie?')
+                Movies.delete($scope.movie.Id).then () ->
+                    $scope.$emit 'alert',
+                        type : 'success'
+                        title : 'Success!'
+                        msg : "#{$scope.movie.Title.String} was deleted."
+                    if not $scope.movie.IsIndexed then $location.path('/edit')
+
 ]
-raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$location', ($scope, episode, shows, Shows, $location) ->
+raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$location', '$window', ($scope, episode, shows, Shows, $location, $window) ->
     $scope.episode = episode
     $scope.shows = shows
 
+    # Set default title
+    if not $scope.episode.IsIndexed
+        $scope.episode.Title.String = $scope.episode.Filepath.substring($scope.episode.Filepath.lastIndexOf('/') + 1)
+
     $scope.saveShow = () ->
-        Shows.add($scope.show).then () ->
-            Shows.getAll().then (shows) ->
-                $scope.shows = shows
-                $scope.show = ''
+        Shows.add($scope.show).then(Shows.getAll).then (shows) ->
+            $scope.shows = shows
+            $scope.show = ''
 
     $scope.saveEpisode = () ->
         $scope.episode.Title.Valid = true
@@ -308,5 +324,18 @@ raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$l
         $scope.episode.ShowId.Int64 = parseInt $scope.episode.ShowId.Int64, 10
         $scope.episode.ShowId.Valid = true
         Shows.saveEpisode($scope.episode).then () ->
-            $location.path '/edit'
+                $scope.$emit 'alert',
+                    type : 'success'
+                    title : 'Success!'
+                    msg : "#{$scope.episode.Title.String} was updated."
+                if not $scope.episode.IsIndexed then $location.path('/edit')
+
+    $scope.deleteEpisode = () ->
+        if $window.confirm('Are you sure you want to delete this episode?')
+                Shows.deleteEpisode($scope.episode.Id).then () ->
+                    $scope.$emit 'alert',
+                        type : 'success'
+                        title : 'Success!'
+                        msg : "#{$scope.episode.Title.String} was deleted."
+                if not $scope.episode.IsIndexed then $location.path('/edit')
 ]

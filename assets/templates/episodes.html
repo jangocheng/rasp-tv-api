@@ -9,10 +9,20 @@
 <br/>
 <div class="row">
     <div class="col-xs-12">
-        <ul ng-if="show.Episodes" class="list-group">
-            <a ng-repeat="e in episodes" ng-href="#/shows/{{show.Id}}/seasons/{{season}}/episodes/{{e.Id}}/mode" class="list-group-item">
-                {{e.Number.Int64}} - {{e.Title.String}}
-            </a>
-        </ul>
+        <div class="panel-group" ng-model="activePanel" bs-collapse>
+            <div class="panel panel-default" ng-repeat="e in episodes">
+                <div class="panel-heading">
+                    <h4 class="panel-title clickable" bs-collapse-toggle>
+                        {{e.Number.Int64}} - {{e.Title.String}}
+                    </h4>
+                </div>
+                <div class="panel-collapse" bs-collapse-target>
+                    <div class="panel-body">
+                        <a class="btn btn-lg btn-success btn-block" ng-href="#/shows/{{show.Id}}/seasons/{{season}}/episodes/{{e.Id}}/mode">Play</a>
+                        <a class="btn btn-lg btn-primary btn-block" ng-href="#/edit/episode/{{e.Id}}">Edit</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
