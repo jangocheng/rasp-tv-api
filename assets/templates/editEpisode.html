@@ -31,7 +31,15 @@
                 </div>
                 <div class="form-group">
                     <input type="submit" class="btn btn-primary btn-block" ng-disabled="editShowForm.$invalid" value="Update">
-                    <button type="button" class="btn btn-danger btn-block" ng-click="deleteEpisode()">Delete</button>
+                    <br>
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <button class="btn btn-warning btn-block" ng-click="deleteEpisode(false)" type="button">Delete Entry</button>
+                        </div>
+                        <div class="col-xs-6">
+                            <button type="button" class="btn btn-danger btn-block" ng-click="deleteEpisode(true)">Delete Both</button>
+                        </div>
+                    </div>
                 </div>
             </fieldset>
         </form>

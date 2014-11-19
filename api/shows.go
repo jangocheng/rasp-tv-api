@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -152,12 +153,33 @@ func StreamEpisode(r render.Render, params martini.Params, res http.ResponseWrit
 	http.ServeFile(res, req, episodes[0].Filepath)
 }
 
-func DeleteEpisode(r render.Render, params martini.Params, db *sql.DB, logger *log.Logger) {
+func DeleteEpisode(r render.Render, req *http.Request, params martini.Params, db *sql.DB, logger *log.Logger) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 	if err != nil {
 		logger.Println(errorMsg(err.Error()))
 		r.JSON(500, map[string]string{"error": err.Error()})
 		return
+	}
+
+	deleteFile := req.URL.Query().Get("file") == "true"
+	if deleteFile {
+		episodes, err := getEpisodesFromDb("WHERE id = "+params["id"], db)
+		if err != nil {
+			logger.Println(errorMsg(err.Error()))
+			r.JSON(500, map[string]string{"error": err.Error()})
+			return
+		}
+		if len(episodes) != 1 {
+			msg := "Could not find episode with id: " + params["id"]
+			logger.Println(errorMsg(msg))
+			r.JSON(404, map[string]string{"error": msg})
+			return
+		}
+		if err = os.Remove(episodes[0].Filepath); err != nil {
+			logger.Println(errorMsg(err.Error()))
+			r.JSON(500, map[string]string{"error": err.Error()})
+			return
+		}
 	}
 
 	_, err = db.Exec(fmt.Sprintf("DELETE FROM episodes WHERE Id = %d;", id))

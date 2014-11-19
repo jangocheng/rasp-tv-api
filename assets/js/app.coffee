@@ -292,9 +292,9 @@ raspTv.controller 'editMovieCtrl', ['$scope', 'movie', 'Movies', '$location', '$
             if not $scope.movie.IsIndexed then $location.path('/edit')
 
 
-    $scope.deleteMovie = () ->
+    $scope.deleteMovie = (deleteFile) ->
         if $window.confirm('Are you sure you want to delete this movie?')
-                Movies.delete($scope.movie.Id).then () ->
+                Movies.delete($scope.movie.Id, deleteFile).then () ->
                     $scope.$emit 'alert',
                         type : 'success'
                         title : 'Success!'
@@ -330,9 +330,9 @@ raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$l
                     msg : "#{$scope.episode.Title.String} was updated."
                 if not $scope.episode.IsIndexed then $location.path('/edit')
 
-    $scope.deleteEpisode = () ->
+    $scope.deleteEpisode = (deleteFile) ->
         if $window.confirm('Are you sure you want to delete this episode?')
-                Shows.deleteEpisode($scope.episode.Id).then () ->
+                Shows.deleteEpisode($scope.episode.Id, deleteFile).then () ->
                     $scope.$emit 'alert',
                         type : 'success'
                         title : 'Success!'

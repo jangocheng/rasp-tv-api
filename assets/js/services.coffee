@@ -48,8 +48,8 @@ services.factory 'Movies', ['$resource', '$rootScope', 'Player', ($resource, $ro
             Player.nowPlaying {movie : id}
             $rootScope.$broadcast 'play'
 
-    api.delete = (id) ->
-        Movies.delete({id : id}).$promise
+    api.delete = (id, deleteFile) ->
+        Movies.delete({id : id, file : deleteFile}).$promise
 
     api.scan = () ->
         Movies.scan().$promise
@@ -122,8 +122,8 @@ services.factory 'Shows', ['$resource', '$rootScope', 'Player', '$route', '$q', 
             if e.Id is episodeId
                 return e
 
-    api.deleteEpisode = (id) ->
-        Shows.deleteEpisode({id : id}).$promise
+    api.deleteEpisode = (id, deleteFile) ->
+        Shows.deleteEpisode({id : id, file : deleteFile}).$promise
 
     return api
 ]

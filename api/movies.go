@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -134,12 +135,33 @@ func StreamMovie(r render.Render, params martini.Params, res http.ResponseWriter
 	http.ServeFile(res, req, movies[0].Filepath)
 }
 
-func DeleteMovie(r render.Render, params martini.Params, db *sql.DB, logger *log.Logger) {
+func DeleteMovie(r render.Render, req *http.Request, params martini.Params, db *sql.DB, logger *log.Logger) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 	if err != nil {
 		logger.Println(errorMsg(err.Error()))
 		r.JSON(500, map[string]string{"error": err.Error()})
 		return
+	}
+
+	deleteFile := req.URL.Query().Get("file") == "true"
+	if deleteFile {
+		movies, err := getMoviesFromDb("WHERE id = "+params["id"], db)
+		if err != nil {
+			logger.Println(errorMsg(err.Error()))
+			r.JSON(500, map[string]string{"error": err.Error()})
+			return
+		}
+		if len(movies) != 1 {
+			msg := "Could not find movie with id: " + params["id"]
+			logger.Println(errorMsg(msg))
+			r.JSON(404, map[string]string{"error": msg})
+			return
+		}
+		if err = os.Remove(movies[0].Filepath); err != nil {
+			logger.Println(errorMsg(err.Error()))
+			r.JSON(500, map[string]string{"error": err.Error()})
+			return
+		}
 	}
 
 	_, err = db.Exec(fmt.Sprintf("DELETE FROM movies WHERE Id = %d", id))
