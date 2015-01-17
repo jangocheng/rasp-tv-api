@@ -26,7 +26,13 @@ func startPlayer(path string) error {
 	if err != nil {
 		return err
 	}
-	return command.Start()
+
+	err = command.Start()
+	go func() {
+		command.Wait()
+	}()
+
+	return err
 }
 
 func RunPlayerCommand(r render.Render, params martini.Params, logger *log.Logger) {
@@ -39,8 +45,9 @@ func RunPlayerCommand(r render.Render, params martini.Params, logger *log.Logger
 
 	cmd, err := strconv.Atoi(params["command"])
 	if err != nil {
-		logger.Println(errorMsg(err.Error()))
-		r.JSON(500, map[string]string{"error": err.Error()})
+		msg := fmt.Sprintf("Invalid command: %s", params["command"])
+		logger.Println(errorMsg(msg))
+		r.JSON(500, map[string]string{"error": msg})
 	}
 
 	switch cmd {

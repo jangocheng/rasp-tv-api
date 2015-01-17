@@ -169,12 +169,14 @@ func DeleteEpisode(r render.Render, req *http.Request, params martini.Params, db
 			r.JSON(500, map[string]string{"error": err.Error()})
 			return
 		}
+
 		if len(episodes) != 1 {
 			msg := "Could not find episode with id: " + params["id"]
 			logger.Println(errorMsg(msg))
 			r.JSON(404, map[string]string{"error": msg})
 			return
 		}
+
 		if err = os.Remove(episodes[0].Filepath); err != nil {
 			logger.Println(errorMsg(err.Error()))
 			r.JSON(500, map[string]string{"error": err.Error()})

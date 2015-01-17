@@ -54,8 +54,8 @@ func main() {
 
 	logFile, err := os.OpenFile(config.LogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
 	check(err)
-
 	defer logFile.Close()
+
 	logger := log.New(logFile, "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	db, err := sql.Open("sqlite3", config.DbPath)
