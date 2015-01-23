@@ -289,6 +289,7 @@ raspTv.controller 'editMovieCtrl', ['$scope', 'movie', 'Movies', '$location', '$
                 type : 'success'
                 title : 'Success!'
                 msg : "#{$scope.movie.Title.String} was updated."
+            Movies.clearCache()
             if not $scope.movie.IsIndexed then $location.path('/edit')
 
 
@@ -299,6 +300,7 @@ raspTv.controller 'editMovieCtrl', ['$scope', 'movie', 'Movies', '$location', '$
                         type : 'success'
                         title : 'Success!'
                         msg : "#{$scope.movie.Title.String} was deleted."
+                    Movies.clearCache()
                     if not $scope.movie.IsIndexed then $location.path('/edit')
 
 ]
@@ -311,6 +313,7 @@ raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$l
         $scope.episode.Title.String = $scope.episode.Filepath.substring($scope.episode.Filepath.lastIndexOf('/') + 1)
 
     $scope.saveShow = () ->
+        Shows.clearCache()
         Shows.add($scope.show).then(Shows.getAll).then (shows) ->
             $scope.shows = shows
             $scope.show = ''
@@ -328,6 +331,7 @@ raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$l
                     type : 'success'
                     title : 'Success!'
                     msg : "#{$scope.episode.Title.String} was updated."
+                Shows.clearCache()
                 if not $scope.episode.IsIndexed then $location.path('/edit')
 
     $scope.deleteEpisode = (deleteFile) ->
@@ -337,5 +341,6 @@ raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$l
                         type : 'success'
                         title : 'Success!'
                         msg : "#{$scope.episode.Title.String} was deleted."
+                Shows.clearCache()
                 if not $scope.episode.IsIndexed then $location.path('/edit')
 ]

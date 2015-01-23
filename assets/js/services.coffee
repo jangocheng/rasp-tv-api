@@ -22,9 +22,17 @@ services.factory 'errorInterceptor', ['$q', '$rootScope', ($q, $rootScope) ->
     }
 ]
 
-services.factory 'Movies', ['$resource', '$rootScope', 'Player', ($resource, $rootScope, Player) ->
+services.factory 'Movies', ['$resource', '$rootScope', 'Player', '$cacheFactory', ($resource, $rootScope, Player, $cacheFactory) ->
     api = {}
+    movieCache = $cacheFactory 'movie'
     Movies = $resource '/movies/:id', {id : '@id'},
+        query :
+            method : 'GET'
+            cache : movieCache
+            isArray : true
+        get :
+            method : 'GET'
+            cache : movieCache
         play :
             method : 'GET'
             url : '/movies/:id/play'
@@ -54,12 +62,23 @@ services.factory 'Movies', ['$resource', '$rootScope', 'Player', ($resource, $ro
     api.scan = () ->
         Movies.scan().$promise
 
+    api.clearCache = () ->
+        movieCache.removeAll()
+
     return api
 ]
 
-services.factory 'Shows', ['$resource', '$rootScope', 'Player', '$route', '$q', ($resource, $rootScope, Player, $route, $q) ->
+services.factory 'Shows', ['$resource', '$rootScope', 'Player', '$route', '$cacheFactory', ($resource, $rootScope, Player, $route, $cacheFactory) ->
     api = {}
+    showsCache = $cacheFactory 'shows'
     Shows = $resource '/shows/:id', {id : '@id'},
+        query :
+            method : 'GET'
+            isArray : true
+            cache : showsCache
+        get :
+            method : 'GET'
+            cache : showsCache
         add :
             method : 'POST'
             url : '/shows/add'
@@ -67,10 +86,12 @@ services.factory 'Shows', ['$resource', '$rootScope', 'Player', '$route', '$q', 
             method : 'GET'
             url : '/shows/episodes/:id'
             params : {id : '@id'}
+            cache : showsCache
         getAllEpisodes :
             method : 'GET'
             url : '/episodes'
             isArray : true
+            cache : showsCache
         saveEpisode :
             method : 'POST'
             url : '/shows/episodes/:id'
@@ -124,6 +145,9 @@ services.factory 'Shows', ['$resource', '$rootScope', 'Player', '$route', '$q', 
 
     api.deleteEpisode = (id, deleteFile) ->
         Shows.deleteEpisode({id : id, file : deleteFile}).$promise
+
+    api.clearCache = () ->
+        showsCache.removeAll()
 
     return api
 ]
