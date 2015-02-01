@@ -1,11 +1,12 @@
 package api
 
 import (
-	_ "code.google.com/p/go-sqlite/go1/sqlite3"
 	"database/sql"
 	"fmt"
-	"github.com/martini-contrib/render"
 	"log"
+
+	_ "code.google.com/p/go-sqlite/go1/sqlite3"
+	"github.com/martini-contrib/render"
 	// "path/filepath"
 	// "regexp"
 	"sort"

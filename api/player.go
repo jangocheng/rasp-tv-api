@@ -2,23 +2,21 @@ package api
 
 import (
 	"fmt"
-	"github.com/codegangsta/martini"
-	"github.com/martini-contrib/render"
 	"io"
 	"log"
 	"os/exec"
 	"strconv"
+
+	"github.com/codegangsta/martini"
+	"github.com/martini-contrib/render"
 )
 
 var pipe io.WriteCloser
 
 func startPlayer(path string) error {
 	var err error
-	if pipe != nil {
-		err = stop()
-		if err != nil {
-			return err
-		}
+	if err = stop(); err != nil {
+		return err
 	}
 
 	command := exec.Command("omxplayer", "-o", "hdmi", "-b", path)
@@ -30,6 +28,7 @@ func startPlayer(path string) error {
 	err = command.Start()
 	go func() {
 		command.Wait()
+		pipe = nil
 	}()
 
 	return err
@@ -73,7 +72,10 @@ func RunPlayerCommand(r render.Render, params martini.Params, logger *log.Logger
 
 func stop() error {
 	var err error
-	_, err = fmt.Fprint(pipe, "q")
-	pipe = nil
+	if pipe != nil {
+		_, err = fmt.Fprint(pipe, "q")
+		pipe = nil
+	}
+
 	return err
 }
