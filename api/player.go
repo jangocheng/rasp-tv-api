@@ -11,6 +11,15 @@ import (
 	"github.com/martini-contrib/render"
 )
 
+const (
+	TOGGLE = iota
+	BACKWARD
+	FORWARD
+	STOP
+	FASTBACKWARD
+	FASTFORWARD
+)
+
 var pipe io.WriteCloser
 
 func startPlayer(path string) error {
@@ -35,38 +44,39 @@ func startPlayer(path string) error {
 }
 
 func RunPlayerCommand(r render.Render, params martini.Params, logger *log.Logger) {
+	var err error
 	if pipe == nil {
-		msg := "Player not started"
-		logger.Println(errorMsg(msg))
-		r.JSON(500, map[string]string{"error": msg})
+		err = fmt.Errorf("Player not started")
+		logger.Println(errorMsg(err.Error()))
+		r.JSON(500, errorResponse(err))
 		return
 	}
 
 	cmd, err := strconv.Atoi(params["command"])
 	if err != nil {
-		msg := fmt.Sprintf("Invalid command: %s", params["command"])
-		logger.Println(errorMsg(msg))
-		r.JSON(500, map[string]string{"error": msg})
+		err = fmt.Errorf("Invalid command: %s", params["command"])
+		logger.Println(errorMsg(err.Error()))
+		r.JSON(500, errorResponse(err))
 	}
 
 	switch cmd {
-	case 0:
+	case TOGGLE:
 		_, err = fmt.Fprint(pipe, "p")
-	case 1:
+	case BACKWARD:
 		_, err = fmt.Fprint(pipe, "\x5b\x44")
-	case 2:
+	case FORWARD:
 		_, err = fmt.Fprint(pipe, "\x5b\x43")
-	case 3:
+	case STOP:
 		err = stop()
-	case 4:
+	case FASTBACKWARD:
 		_, err = fmt.Fprint(pipe, "\x5b\x42")
-	case 5:
+	case FASTFORWARD:
 		_, err = fmt.Fprint(pipe, "\x5b\x41")
 	}
 
 	if err != nil {
 		logger.Println(errorMsg(err.Error()))
-		r.JSON(500, map[string]string{"error": err.Error()})
+		r.JSON(500, errorResponse(err))
 	}
 }
 

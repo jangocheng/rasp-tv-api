@@ -10,6 +10,8 @@ import (
 	// "path/filepath"
 	// "regexp"
 	"sort"
+
+	"simongeeks.com/joe/rasp-tv/data"
 	// "strconv"
 	// "strings"
 )
@@ -18,14 +20,14 @@ func ScanMovies(r render.Render, db *sql.DB, logger *log.Logger, config *Config)
 	moviePaths, err := findVideoFiles(config.MoviePath)
 	if err != nil {
 		logger.Println(errorMsg(err.Error()))
-		r.JSON(500, map[string]string{"error": err.Error()})
+		r.JSON(500, errorResponse(err))
 		return
 	}
 
-	movies, err := getMoviesFromDb("ORDER BY filepath", db)
+	movies, err := data.GetMovies("ORDER BY filepath", db)
 	if err != nil {
 		logger.Println(errorMsg(err.Error()))
-		r.JSON(500, map[string]string{"error": err.Error()})
+		r.JSON(500, errorResponse(err))
 		return
 	}
 
@@ -34,7 +36,7 @@ func ScanMovies(r render.Render, db *sql.DB, logger *log.Logger, config *Config)
 			_, err := db.Exec(fmt.Sprintf("INSERT INTO movies (filepath, isIndexed) VALUES ('%s', 0)", sqlEscape(path)))
 			if err != nil {
 				logger.Println(errorMsg(err.Error()))
-				r.JSON(500, map[string]string{"error": err.Error()})
+				r.JSON(500, errorResponse(err))
 				return
 			}
 		}
@@ -47,14 +49,14 @@ func ScanEpisodes(r render.Render, db *sql.DB, logger *log.Logger, config *Confi
 	showsPaths, err := findVideoFiles(config.ShowsPath)
 	if err != nil {
 		logger.Println(errorMsg(err.Error()))
-		r.JSON(500, map[string]string{"error": err.Error()})
+		r.JSON(500, errorResponse(err))
 		return
 	}
 
-	episodes, err := getEpisodesFromDb("ORDER BY filepath", db)
+	episodes, err := data.GetEpisodes("ORDER BY filepath", db)
 	if err != nil {
 		logger.Println(errorMsg(err.Error()))
-		r.JSON(500, map[string]string{"error": err.Error()})
+		r.JSON(500, errorResponse(err))
 		return
 	}
 
@@ -63,7 +65,7 @@ func ScanEpisodes(r render.Render, db *sql.DB, logger *log.Logger, config *Confi
 			_, err := db.Exec(fmt.Sprintf("INSERT INTO episodes (filepath, isIndexed) VALUES ('%s', 0)", sqlEscape(path)))
 			if err != nil {
 				logger.Println(errorMsg(err.Error()))
-				r.JSON(500, map[string]string{"error": err.Error()})
+				r.JSON(500, errorResponse(err))
 				return
 			}
 		}
@@ -182,7 +184,7 @@ func ScanEpisodes(r render.Render, db *sql.DB, logger *log.Logger, config *Confi
 // 	r.JSON(200, "Success")
 // }
 
-func findMovieByFilePath(movies []Movie, numMovies int, path string) int {
+func findMovieByFilePath(movies []data.Movie, numMovies int, path string) int {
 	index := sort.Search(numMovies, func(i int) bool {
 		return movies[i].Filepath >= path
 	})
@@ -193,7 +195,7 @@ func findMovieByFilePath(movies []Movie, numMovies int, path string) int {
 	}
 }
 
-func findEpisodeByFilePath(episodes []Episode, numEpisodes int, path string) int {
+func findEpisodeByFilePath(episodes []data.Episode, numEpisodes int, path string) int {
 	index := sort.Search(numEpisodes, func(i int) bool {
 		return episodes[i].Filepath >= path
 	})

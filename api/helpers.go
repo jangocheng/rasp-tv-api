@@ -47,3 +47,11 @@ func findVideoFiles(rootPath string) ([]string, error) {
 func errorMsg(msg string) string {
 	return fmt.Sprintf("[Error] %s", msg)
 }
+
+func errorResponse(err error) map[string]string {
+	return map[string]string{"error": err.Error()}
+}
+
+func statusResponse(msg string) map[string]string {
+	return map[string]string{"status": msg}
+}
