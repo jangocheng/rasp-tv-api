@@ -110,7 +110,9 @@ raspTv.run ['$rootScope', 'Player', ($rootScope, Player) ->
         Player.getSession().then (session) ->
             $rootScope.session = if session.MovieId? or session.EpisodeId? then session else null
 
+    # get session initially
     getSession().then () ->
+        # watch session and update the server when it changes or clear it if set to null
         $rootScope.$watch 'session', ((newVal, oldVal) ->
             if angular.equals(newVal, oldVal) then return
             if newVal? then Player.updateSession(newVal) else Player.clearSession()
@@ -141,6 +143,7 @@ raspTv.controller 'navCtrl', ['$scope', '$location', '$rootScope', ($scope, $loc
         else if $scope.session.EpisodeId.Valid
             $scope.nowPlayingLink = "#/shows/#{$scope.session.EpisodeId.Int64}/play"
 
+    # update now playing link if the session changes
     $rootScope.$watch 'session', setUpLink, true
 ]
 
@@ -202,7 +205,7 @@ raspTv.controller 'playCtrl', ['$scope', 'Player', 'Shows', 'Movies', '$routePar
 
 raspTv.controller 'modeCtrl', ['$scope', '$routeParams', 'title', ($scope, $routeParams, title) ->
     $scope.title = title
-    $scope.href  = "##{$routeParams.type}/#{$routeParams.id}"
+    $scope.href  = "#/#{$routeParams.type}/#{$routeParams.id}"
 ]
 
 raspTv.controller 'showsCtrl', ['$scope', 'shows', 'Shows', ($scope, shows, Shows) ->
@@ -228,22 +231,22 @@ raspTv.controller 'seasonsCtrl', ['$scope', 'show', '$location', ($scope, show, 
         season = $scope.seasons[Math.floor(Math.random() * $scope.seasons.length)]
         episodes = (e for e in show.Episodes when e.Season.Int64 is season)
         episodeId = episodes[Math.floor(Math.random() * episodes.length)].Id
-        $location.path "/shows/#{show.Id}/seasons/#{season}/episodes/#{episodeId}/mode"
+        $location.path "/shows/#{episodeId}/mode"
 ]
 
 raspTv.controller 'episodesCtrl', ['$scope', 'show', '$routeParams', '$location', ($scope, show, $routeParams, $location) ->
-    $scope.show = show
-    $scope.season = parseInt $routeParams.season, 10
+    $scope.show     = show
+    $scope.season   = parseInt $routeParams.season, 10
     $scope.episodes = (e for e in show.Episodes when e.Season.Int64 is $scope.season).sort (a, b) ->
         a.Number.Int64 - b.Number.Int64
 
     $scope.random = () ->
         episodeId = $scope.episodes[Math.floor(Math.random() * $scope.episodes.length)].Id
-        $location.path "/shows/#{show.Id}/seasons/#{$scope.season}/episodes/#{episodeId}/mode"
+        $location.path "/shows/#{episodeId}/mode"
 ]
 
 raspTv.controller 'editCtrl', ['$scope', 'nonIndexedMovies', 'nonIndexedEpisodes', ($scope, movies, episodes) ->
-    $scope.movies = movies
+    $scope.movies   = movies
     $scope.episodes = episodes
 ]
 
@@ -290,7 +293,7 @@ raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$l
             $scope.show = ''
 
     $scope.saveEpisode = () ->
-        $scope.episode.Title.Valid = true
+        $scope.episode.Title.Valid  = true
         $scope.episode.Number.Int64 = parseInt $scope.episode.Number.Int64, 10
         $scope.episode.Number.Valid = true
         $scope.episode.Season.Int64 = parseInt $scope.episode.Season.Int64, 10
