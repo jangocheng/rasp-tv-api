@@ -95,6 +95,13 @@ func PlayMovie(r render.Render, params martini.Params, db *sql.DB, logger *log.L
 		return
 	}
 
+	session := data.Session{MovieId: sql.NullInt64{Int64: movies[0].Id, Valid: true}, IsPlaying: true, IsPaused: false}
+	if err = session.Save(db); err != nil {
+		logger.Println(errorMsg(err.Error()))
+		r.JSON(500, errorResponse(err))
+		return
+	}
+
 	r.JSON(200, statusResponse(fmt.Sprintf("Playing movie at %s", movies[0].Filepath)))
 }
 

@@ -13,8 +13,7 @@ type Show struct {
 }
 
 func (s *Show) Add(db *sql.DB) (int64, error) {
-	query := fmt.Sprintf("INSERT INTO shows (title) VALUES ('%s')", sqlEscape(s.Title))
-	result, err := db.Exec(query)
+	result, err := db.Exec("INSERT INTO shows (title) VALUES (?)", s.Title)
 
 	if err != nil {
 		return -1, err
@@ -56,14 +55,14 @@ func (e *Episode) Update(db *sql.DB) error {
 		return fmt.Errorf("Cannot update episode with invalid season")
 	}
 
-	query := fmt.Sprintf("UPDATE episodes SET showId = %d, title = '%s', episodeNumber = %d, season = %d, isIndexed = 1 WHERE id = %d", e.ShowId.Int64, sqlEscape(e.Title.String), e.Number.Int64, e.Season.Int64, e.Id)
-	_, err := db.Exec(query)
+	query := "UPDATE episodes SET showId = ?, title = ?, episodeNumber = ?, season = ?, isIndexed = 1 WHERE id = ?"
+	_, err := db.Exec(query, e.ShowId, e.Title, e.Number, e.Season, e.Id)
 	return err
 }
 
 func (e *Episode) DeleteEpisode(db *sql.DB) error {
 	var err error
-	_, err = db.Exec(fmt.Sprintf("DELETE FROM episodes WHERE Id = %d;", e.Id))
+	_, err = db.Exec("DELETE FROM episodes WHERE Id = ?;", e.Id)
 	return err
 }
 

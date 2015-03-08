@@ -40,7 +40,7 @@
                         <li ng-class="{active : isActive('edit')}">
                             <a href="#/edit">Edit</a>
                         </li>
-                        <li ng-class="{active : isActive('play')}" ng-show="isPlaying">
+                        <li ng-class="{active : isActive('play')}" ng-show="session.IsPlaying">
                             <a ng-href="{{nowPlayingLink}}">Now Playing</a>
                         </li>
                     </ul>

@@ -1,14 +1,15 @@
 package main
 
 import (
-	_ "code.google.com/p/go-sqlite/go1/sqlite3"
 	"database/sql"
 	"errors"
-	"github.com/codegangsta/martini"
-	"github.com/martini-contrib/render"
 	"log"
 	"os"
 	"os/user"
+
+	_ "code.google.com/p/go-sqlite/go1/sqlite3"
+	"github.com/codegangsta/martini"
+	"github.com/martini-contrib/render"
 	"simongeeks.com/joe/rasp-tv/api"
 )
 
@@ -99,7 +100,12 @@ func main() {
 	})
 
 	router.Get("/episodes", api.GetAllEpisodes)
-	router.Get("/player/:command", api.RunPlayerCommand)
+	router.Group("/player", func(r martini.Router) {
+		r.Get("/command/:command", api.RunPlayerCommand)
+		r.Get("/session", api.NowPlaying)
+		r.Delete("/session", api.ClearSession)
+		r.Post("/session", api.UpdateSession)
+	})
 	// router.Get("/auto", api.AutoIndex)
 
 	m.Action(router.Handle)

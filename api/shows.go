@@ -77,6 +77,13 @@ func PlayEpisode(r render.Render, params martini.Params, db *sql.DB, logger *log
 		return
 	}
 
+	session := data.Session{EpisodeId: sql.NullInt64{Int64: episodes[0].Id, Valid: true}, IsPlaying: true, IsPaused: false}
+	if err = session.Save(db); err != nil {
+		logger.Println(errorMsg(err.Error()))
+		r.JSON(500, errorResponse(err))
+		return
+	}
+
 	r.JSON(200, statusResponse(fmt.Sprintf("Playing episode at %s", episodes[0].Filepath)))
 }
 
@@ -161,7 +168,7 @@ func AddShow(r render.Render, req *http.Request, db *sql.DB, logger *log.Logger)
 }
 
 func GetShows(r render.Render, db *sql.DB, logger *log.Logger) {
-	shows, err := data.GetShows("", db)
+	shows, err := data.GetShows("ORDER BY title", db)
 	if err != nil {
 		logger.Println(errorMsg(err.Error()))
 		r.JSON(500, errorResponse(err))

@@ -10,19 +10,30 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
             movies : ['Movies', (Movies) ->
                 Movies.getAll true
             ]
-    $routeProvider.when '/movies/:id/play',
+    $routeProvider.when '/:type/:id/play',
         templateUrl : '/templates/play.html'
-        controller : 'playMovieCtrl'
+        controller : 'playCtrl'
         resolve :
-            movie : ['$route', 'Movies', ($route, Movies) ->
-                Movies.get $route.current.params.id
+            playing : ['$route', 'Shows', 'Movies', ($route, Shows, Movies) ->
+                if $route.current.params.type is 'movies'
+                    Movies.get($route.current.params.id)
+                else
+                    Shows.getEpisode($route.current.params.id).then (episode) ->
+                        Shows.get(episode.ShowId.Int64).then (show) ->
+                            title : show.Title
+                            episode : episode
             ]
-    $routeProvider.when '/movies/:id/mode',
+    $routeProvider.when '/:type/:id/mode',
         templateUrl : '/templates/mode.html'
         controller : 'modeCtrl'
         resolve :
-            title : ['$route', 'Movies', ($route, Movies) ->
-                Movies.get($route.current.params.id).then (movie) -> movie.Title.String
+            title : ['$route', 'Movies', 'Shows', ($route, Movies, Shows) ->
+                if $route.current.params.type is 'movies'
+                    Movies.get($route.current.params.id).then (movie) -> movie.Title.String
+                else
+                    Shows.getEpisode($route.current.params.id).then (episode) ->
+                        Shows.get(episode.ShowId.Int64).then (show) ->
+                            "#{show.Title} - #{episode.Season.Int64} - #{episode.Title.String}"
             ]
     $routeProvider.when '/movies/:id/stream',
         templateUrl : '/templates/stream.html'
@@ -52,22 +63,6 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
             show : ['$route', 'Shows', ($route, Shows) ->
                 Shows.get $route.current.params.id
             ]
-    $routeProvider.when '/shows/:id/seasons/:season/episodes/:episode/play',
-        templateUrl : '/templates/play.html'
-        controller : 'playShowCtrl'
-        resolve :
-            show : ['$route', 'Shows', ($route, Shows) ->
-                Shows.get $route.current.params.id
-            ]
-    $routeProvider.when '/shows/:id/seasons/:season/episodes/:episode/mode',
-        templateUrl : '/templates/mode.html'
-        controller : 'modeCtrl'
-        resolve :
-            title : ['$route', 'Shows', ($route, Shows) ->
-                Shows.get($route.current.params.id).then (show) ->
-                    episode = Shows.getEpisodeFromShow show, parseInt($route.current.params.episode, 10)
-                    "#{show.Title} - #{episode.Season.Int64} - #{episode.Title.String}"
-            ]
     $routeProvider.when '/shows/:id/seasons/:season/episodes/:episode/stream',
         templateUrl : '/templates/stream.html'
         controller : 'streamCtrl'
@@ -82,9 +77,11 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
         controller : 'editCtrl'
         resolve:
             nonIndexedMovies : ['Movies', (Movies) ->
+                Movies.clearCache()
                 Movies.getAll false
             ]
             nonIndexedEpisodes : ['Shows', (Shows) ->
+                Shows.clearCache()
                 Shows.getAllEpisodes false
             ]
     $routeProvider.when '/edit/movie/:id',
@@ -108,8 +105,21 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
         redirectTo : '/movies'
 ]
 
-raspTv.controller 'navCtrl', ['$scope', '$location', 'Player', ($scope, $location, Player) ->
-    $scope.isPlaying = Player.isPlaying()
+raspTv.run ['$rootScope', 'Player', ($rootScope, Player) ->
+    getSession = () ->
+        Player.getSession().then (session) ->
+            $rootScope.session = if session.MovieId? or session.EpisodeId? then session else null
+
+    getSession().then () ->
+        $rootScope.$watch 'session', ((newVal, oldVal) ->
+            if angular.equals(newVal, oldVal) then return
+            if newVal? then Player.updateSession(newVal) else Player.clearSession()
+        ), true
+
+    $rootScope.refreshSession = getSession
+]
+
+raspTv.controller 'navCtrl', ['$scope', '$location', '$rootScope', ($scope, $location, $rootScope) ->
 
     $scope.isActive = (page) ->
         if page is 'movies' and /^\/movies/.test($location.path()) and not /play$/.test($location.path())
@@ -124,19 +134,14 @@ raspTv.controller 'navCtrl', ['$scope', '$location', 'Player', ($scope, $locatio
             false
 
     setUpLink = () ->
-        nowPlaying = Player.nowPlaying()
-        if nowPlaying?
-            if nowPlaying.movie?
-                $scope.nowPlayingLink = "#/movies/#{nowPlaying.movie}/play"
-            else
-                $scope.nowPlayingLink = "#/shows/#{nowPlaying.show}/seasons/#{nowPlaying.season}/episodes/#{nowPlaying.episode}/play"
+        if not $scope.session? then return
 
-    $scope.$on 'play', () ->
-        setUpLink()
-        $scope.isPlaying = true
-    $scope.$on 'stop', () -> $scope.isPlaying = false
+        if $scope.session.MovieId.Valid
+            $scope.nowPlayingLink = "#/movies/#{$scope.session.MovieId.Int64}/play"
+        else if $scope.session.EpisodeId.Valid
+            $scope.nowPlayingLink = "#/shows/#{$scope.session.EpisodeId.Int64}/play"
 
-    setUpLink()
+    $rootScope.$watch 'session', setUpLink, true
 ]
 
 raspTv.controller 'alertCtrl', ['$scope', '$rootScope', ($scope, $rootScope) ->
@@ -166,73 +171,38 @@ raspTv.controller 'movieCtrl', ['$scope', 'movies', 'Movies', ($scope, movies, M
                 title : 'Success!'
 ]
 
-raspTv.controller 'playMovieCtrl', ['$scope', 'Player', 'movie', 'Movies', '$routeParams', '$location', ($scope, Player, movie, Movies, $routeParams, $location) ->
-    setup = () ->
+raspTv.controller 'playCtrl', ['$scope', 'Player', 'Shows', 'Movies', '$routeParams', '$location', 'playing', '$rootScope', ($scope, Player, Shows, Movies, $routeParams, $location, playing, $rootScope) ->
+    $scope.playing = playing
+    if $routeParams.type is 'movies'
         $scope.isShow = false
-        $scope.isPaused = Player.isPaused()
-        $scope.playing = movie
+        returnPath = '/movies'
+    else if $routeParams.type is 'shows'
+        $scope.isShow = true
+        returnPath = '/shows'
+    else
+        $location.path '/'
 
-        $scope.toggle = () ->
-            Player.toggle()
-            $scope.isPaused = Player.isPaused()
-
+    setup = () ->
+        $scope.toggle = () -> Player.toggle().then () -> $scope.session.IsPaused = not $scope.session.IsPaused
         $scope.backward = Player.backward
         $scope.forward = Player.forward
         $scope.fastBackward = Player.fastBackward
         $scope.fastForward = Player.fastForward
         $scope.stop = () ->
-            Player.stop()
-            $location.path '/movies'
+            Player.stop().then () ->
+                $rootScope.session = null
+                $location.path returnPath
 
-    nowPlaying = Player.nowPlaying()
-    if nowPlaying? and nowPlaying.movie? and nowPlaying.movie is $routeParams.id
-        setup()
+    if $scope.session? then setup()
     else
-        Movies.play($routeParams.id).then setup, () ->
-            Player.clearCache()
-            $location.path '/movies'
+        promise = if $scope.isShow then Shows.play($routeParams.id) else Movies.play($routeParams.id)
+        promise.then(setup).then $scope.refreshSession, () ->
+            $location.path returnPath
 ]
 
 raspTv.controller 'modeCtrl', ['$scope', '$routeParams', 'title', ($scope, $routeParams, title) ->
     $scope.title = title
-    if $routeParams.episode?
-        $scope.href = "#/shows/#{$routeParams.id}/seasons/#{$routeParams.season}/episodes/#{$routeParams.episode}"
-    else
-        $scope.href = "#/movies/#{$routeParams.id}"
-]
-
-raspTv.controller 'showsCtrl', ['$scope', 'shows', '$rootScope', '$location', ($scope, shows, $rootScope, $location) ->
-    shows.getAll().then (shows) -> $scope.shows = shows
-]
-
-raspTv.controller 'playShowCtrl', ['$scope', 'Player', 'show', '$routeParams', 'Shows', '$location', ($scope, Player, show, $routeParams, Shows, $location) ->
-    setup = () ->
-        $scope.isShow = true
-        $scope.isPaused = Player.isPaused()
-
-        $scope.playing = show
-        episodeId = parseInt $routeParams.episode, 10
-        $scope.playing.episode = Shows.getEpisodeFromShow show, episodeId
-
-        $scope.toggle = () ->
-            Player.toggle()
-            $scope.isPaused = Player.isPaused()
-
-        $scope.backward = Player.backward
-        $scope.forward = Player.forward
-        $scope.fastBackward = Player.fastBackward
-        $scope.fastForward = Player.fastForward
-        $scope.stop = () ->
-            Player.stop()
-            $location.path '/shows'
-
-    nowPlaying = Player.nowPlaying()
-    if nowPlaying? and nowPlaying.episode? and nowPlaying.episode is $routeParams.episode
-        setup()
-    else
-        Shows.play($routeParams.episode).then setup, () ->
-            Player.clearCache()
-            $location.path '/shows'
+    $scope.href  = "##{$routeParams.type}/#{$routeParams.id}"
 ]
 
 raspTv.controller 'showsCtrl', ['$scope', 'shows', 'Shows', ($scope, shows, Shows) ->
@@ -276,11 +246,12 @@ raspTv.controller 'editCtrl', ['$scope', 'nonIndexedMovies', 'nonIndexedEpisodes
     $scope.movies = movies
     $scope.episodes = episodes
 ]
+
 raspTv.controller 'editMovieCtrl', ['$scope', 'movie', 'Movies', '$location', '$window', ($scope, movie, Movies, $location, $window) ->
     $scope.movie = movie
 
     if not $scope.movie.IsIndexed
-        $scope.movie.Title.String = $scope.movie.Filepath.substring($scope.movie.Filepath.lastIndexOf('/') + 1)
+        $scope.movie.Title.String = $scope.movie.Filepath.substring($scope.movie.Filepath.lastIndexOf('/') + 1, $scope.movie.Filepath.lastIndexOf('.'))
 
     $scope.save = () ->
         $scope.movie.Title.Valid = true
@@ -310,7 +281,7 @@ raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$l
 
     # Set default title
     if not $scope.episode.IsIndexed
-        $scope.episode.Title.String = $scope.episode.Filepath.substring($scope.episode.Filepath.lastIndexOf('/') + 1)
+        $scope.episode.Title.String = $scope.episode.Filepath.substring($scope.episode.Filepath.lastIndexOf('/') + 1, $scope.episode.Filepath.lastIndexOf('.'))
 
     $scope.saveShow = () ->
         Shows.clearCache()

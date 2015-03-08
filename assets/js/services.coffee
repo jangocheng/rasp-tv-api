@@ -22,7 +22,7 @@ services.factory 'errorInterceptor', ['$q', '$rootScope', ($q, $rootScope) ->
     }
 ]
 
-services.factory 'Movies', ['$resource', '$rootScope', 'Player', '$cacheFactory', ($resource, $rootScope, Player, $cacheFactory) ->
+services.factory 'Movies', ['$resource', '$cacheFactory', ($resource, $cacheFactory) ->
     api = {}
     movieCache = $cacheFactory 'movie'
     Movies = $resource '/movies/:id', {id : '@id'},
@@ -51,10 +51,7 @@ services.factory 'Movies', ['$resource', '$rootScope', 'Player', '$cacheFactory'
         Movies.save({id : movie.Id}, movie).$promise
 
     api.play = (id) ->
-        Movies.play({id : id}).$promise.then () ->
-            Player.isPlaying true
-            Player.nowPlaying {movie : id}
-            $rootScope.$broadcast 'play'
+        Movies.play({id : id}).$promise
 
     api.delete = (id, deleteFile) ->
         Movies.delete({id : id, file : deleteFile}).$promise
@@ -68,7 +65,7 @@ services.factory 'Movies', ['$resource', '$rootScope', 'Player', '$cacheFactory'
     return api
 ]
 
-services.factory 'Shows', ['$resource', '$rootScope', 'Player', '$route', '$cacheFactory', ($resource, $rootScope, Player, $route, $cacheFactory) ->
+services.factory 'Shows', ['$resource', '$cacheFactory', ($resource, $cacheFactory) ->
     api = {}
     showsCache = $cacheFactory 'shows'
     Shows = $resource '/shows/:id', {id : '@id'},
@@ -127,13 +124,7 @@ services.factory 'Shows', ['$resource', '$rootScope', 'Player', '$route', '$cach
         Shows.saveEpisode({id : episode.Id}, episode).$promise
 
     api.play = (id) ->
-        Shows.playEpisode({id : id}).$promise.then () ->
-            Player.isPlaying true
-            Player.nowPlaying
-                episode : id
-                show : $route.current.params.id
-                season : $route.current.params.season
-            $rootScope.$broadcast 'play'
+        Shows.playEpisode({id : id}).$promise
 
     api.scan = () ->
         Shows.scan().$promise
@@ -152,44 +143,29 @@ services.factory 'Shows', ['$resource', '$rootScope', 'Player', '$route', '$cach
     return api
 ]
 
-services.factory 'Player', ['$rootScope', 'playerCommands', '$resource', ($rootScope, playerCommands, $resource) ->
-    Player = $resource '/player/:command', {command : '@command'}
+services.factory 'Player', ['playerCommands', '$resource', (playerCommands, $resource) ->
+    Player  = $resource '/player/command/:command', {command : '@command'}
+    Session = $resource '/player/session'
 
     api = {}
-    api.isPaused = (isPaused) ->
-        if isPaused?
-            localStorage['isPaused'] = isPaused
-        else
-            return if localStorage['isPaused'] is 'true' then true else false
-    api.isPlaying = (isPlaying) ->
-        if isPlaying?
-            localStorage['isPlaying'] = isPlaying
-        else
-            return if localStorage['isPlaying'] is 'true' then true else false
-    api.nowPlaying = (nowPlaying) ->
-        if nowPlaying? and angular.isObject(nowPlaying)
-            localStorage['nowPlaying'] = JSON.stringify nowPlaying
-        else
-            playing = localStorage['nowPlaying']
-            return if playing? then JSON.parse(playing) else playing
+    api.getSession = () ->
+        Session.get().$promise
+    api.clearSession = () ->
+        Session.remove().$promise
+    api.updateSession = (session) ->
+        Session.save(session).$promise
     api.toggle = () ->
-        Player.get {command : playerCommands.TOGGLE}
-        api.isPaused(not api.isPaused())
+        Player.get({command : playerCommands.TOGGLE}).$promise
     api.backward = () ->
-        Player.get {command : playerCommands.BACKWARD}
+        Player.get({command : playerCommands.BACKWARD}).$promise
     api.forward = () ->
-        Player.get {command : playerCommands.FORWARD}
+        Player.get({command : playerCommands.FORWARD}).$promise
     api.stop = () ->
-        Player.get {command : playerCommands.STOP}
-        localStorage.clear()
-        $rootScope.$broadcast 'stop'
+        Player.get({command : playerCommands.STOP}).$promise
     api.fastBackward = () ->
-        Player.get {command : playerCommands.FASTBACKWARD}
+        Player.get({command : playerCommands.FASTBACKWARD}).$promise
     api.fastForward = () ->
-        Player.get {command : playerCommands.FASTFORWARD}
-    api.clearCache = () ->
-        localStorage.clear()
-        $rootScope.$broadcast 'stop'
+        Player.get({command : playerCommands.FASTFORWARD}).$promise
 
     return api
 ]

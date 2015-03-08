@@ -20,3 +20,10 @@ CREATE TABLE IF NOT EXISTS episodes (
     isIndexed INTEGER NOT NULL,
     FOREIGN KEY(showId) REFERENCES show(id)
 );
+CREATE TABLE IF NOT EXISTS session (
+    id INTEGER PRIMARY KEY,
+    movieId INTEGER,
+    episodeId INTEGER,
+    isPaused INTEGER NOT NULL,
+    isPlaying INTEGER NOT NULL
+);

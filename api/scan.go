@@ -2,7 +2,6 @@ package api
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 
 	_ "code.google.com/p/go-sqlite/go1/sqlite3"
@@ -33,7 +32,7 @@ func ScanMovies(r render.Render, db *sql.DB, logger *log.Logger, config *Config)
 
 	for _, path := range moviePaths {
 		if index := findMovieByFilePath(movies, len(movies), path); index == -1 {
-			_, err := db.Exec(fmt.Sprintf("INSERT INTO movies (filepath, isIndexed) VALUES ('%s', 0)", sqlEscape(path)))
+			_, err := db.Exec("INSERT INTO movies (filepath, isIndexed) VALUES (?, 0)", path)
 			if err != nil {
 				logger.Println(errorMsg(err.Error()))
 				r.JSON(500, errorResponse(err))
@@ -42,7 +41,7 @@ func ScanMovies(r render.Render, db *sql.DB, logger *log.Logger, config *Config)
 		}
 	}
 
-	r.JSON(200, "Success")
+	r.JSON(200, statusResponse("Success"))
 }
 
 func ScanEpisodes(r render.Render, db *sql.DB, logger *log.Logger, config *Config) {
@@ -62,7 +61,7 @@ func ScanEpisodes(r render.Render, db *sql.DB, logger *log.Logger, config *Confi
 
 	for _, path := range showsPaths {
 		if index := findEpisodeByFilePath(episodes, len(episodes), path); index == -1 {
-			_, err := db.Exec(fmt.Sprintf("INSERT INTO episodes (filepath, isIndexed) VALUES ('%s', 0)", sqlEscape(path)))
+			_, err := db.Exec("INSERT INTO episodes (filepath, isIndexed) VALUES (?, 0)", path)
 			if err != nil {
 				logger.Println(errorMsg(err.Error()))
 				r.JSON(500, errorResponse(err))
@@ -71,7 +70,7 @@ func ScanEpisodes(r render.Render, db *sql.DB, logger *log.Logger, config *Confi
 		}
 	}
 
-	r.JSON(200, "Success")
+	r.JSON(200, statusResponse("Success"))
 }
 
 // used to auto index movies and tv shows based on directory structure and filenames

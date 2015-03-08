@@ -2,7 +2,6 @@ package data
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"io"
 )
@@ -17,17 +16,15 @@ type Movie struct {
 
 func (m *Movie) Update(db *sql.DB) error {
 	if !m.Title.Valid {
-		return errors.New("Cannot update movie with invalid title")
+		return fmt.Errorf("Cannot update movie with invalid title")
 	}
 
-	query := fmt.Sprintf("UPDATE movies SET title = '%s', isIndexed = 1 WHERE id = %d", sqlEscape(m.Title.String), m.Id)
-	_, err := db.Exec(query)
+	_, err := db.Exec("UPDATE movies SET title = ?, isIndexed = 1 WHERE id = ?", m.Title, m.Id)
 	return err
 }
 
 func (m *Movie) Delete(db *sql.DB) error {
-	var err error
-	_, err = db.Exec(fmt.Sprintf("DELETE FROM movies WHERE Id = %d", m.Id))
+	_, err := db.Exec("DELETE FROM movies WHERE Id = ?", m.Id)
 	return err
 }
 
