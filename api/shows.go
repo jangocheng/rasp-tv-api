@@ -71,7 +71,7 @@ func PlayEpisode(r render.Render, params martini.Params, db *sql.DB, logger *log
 		return
 	}
 
-	if err = startPlayer(episodes[0].Filepath); err != nil {
+	if err = startPlayer(episodes[0].Filepath, db); err != nil {
 		logger.Println(errorMsg(err.Error()))
 		r.JSON(500, errorResponse(err))
 		return

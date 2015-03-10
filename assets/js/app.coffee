@@ -156,7 +156,7 @@ raspTv.controller 'streamCtrl', ['$scope', '$routeParams', 'title', ($scope, $ro
     if $routeParams.type is 'movies'
         $scope.src = "/movies/#{$routeParams.id}/stream"
     else
-        $scope.src = "/shows/episodes/#{$routeParams.episode}/stream"
+        $scope.src = "/shows/episodes/#{$routeParams.id}/stream"
 ]
 
 raspTv.controller 'movieCtrl', ['$scope', 'movies', 'Movies', ($scope, movies, Movies) ->

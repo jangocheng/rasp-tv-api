@@ -27,7 +27,7 @@ const (
 
 var pipe io.WriteCloser
 
-func startPlayer(path string) error {
+func startPlayer(path string, db *sql.DB) error {
 	var err error
 	if err = stop(); err != nil {
 		return err
@@ -42,6 +42,7 @@ func startPlayer(path string) error {
 	err = command.Start()
 	go func() {
 		command.Wait()
+		data.ClearSessions(db)
 		pipe = nil
 	}()
 
