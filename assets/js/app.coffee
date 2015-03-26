@@ -188,7 +188,7 @@ raspTv.controller 'playCtrl', ['$scope', 'Player', 'Shows', 'Movies', '$routePar
         $scope.fastBackward = Player.fastBackward
         $scope.fastForward = Player.fastForward
         $scope.stop = () ->
-            Player.stop().then () ->
+            Player.stop().finally () ->
                 $rootScope.session = null
                 $location.path returnPath
 

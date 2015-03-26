@@ -11,6 +11,7 @@ import (
 	"github.com/codegangsta/martini"
 	"github.com/martini-contrib/render"
 	"simongeeks.com/joe/rasp-tv/api"
+	"simongeeks.com/joe/rasp-tv/data"
 )
 
 func getConfig() (*api.Config, error) {
@@ -62,6 +63,11 @@ func main() {
 	db, err := sql.Open("sqlite3", config.DbPath)
 	check(err)
 	defer db.Close()
+
+	// clear session when app first starts
+	if err := data.ClearSessions(db); err != nil {
+		logger.Fatal(err)
+	}
 
 	m := martini.New()
 	m.Use(martini.Recovery())
