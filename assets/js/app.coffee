@@ -282,6 +282,15 @@ raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$l
     if not $scope.episode.IsIndexed
         $scope.episode.Title.String = $scope.episode.Filepath.substring($scope.episode.Filepath.lastIndexOf('/') + 1, $scope.episode.Filepath.lastIndexOf('.'))
 
+        # Try to get season and episode number from filename
+        matches = /[sS](0?\d)[eE](0?\d+)/.exec($scope.episode.Filepath)[1..]
+        if matches[0]?
+            $scope.episode.Season.Int64 = parseInt matches[0], 10
+            $scope.episode.Season.Valid = true
+        if matches[1]?
+            $scope.episode.Number.Int64 = parseInt matches[1], 10
+            $scope.episode.Number.Valid = true
+
     $scope.saveShow = () ->
         Shows.clearCache()
         Shows.add($scope.show).then(Shows.getAll).then (shows) ->
