@@ -4,7 +4,8 @@
             <fieldset>
                 <legend>Add Show</legend>
                 <div class="form-group">
-                    <input type="text" placeholder="Title" name="showTitle" ng-model="show.Title" class="form-control" required>
+                    <label>Title</label>
+                    <input type="text" name="showTitle" ng-model="show.Title" class="form-control" required>
                 </div>
                 <div class="form-group">
                     <input type="submit" class="btn btn-primary btn-block" ng-disabled="addShowForm.$invalid" value="Add">
@@ -18,15 +19,19 @@
                     Path: {{episode.Filepath}}
                 </p>
                 <div class="form-group">
-                    <input type="text" placeholder="Title" name="title" ng-model="episode.Title.String" class="form-control" required>
+                    <label>Title</label>
+                    <input type="text" name="title" ng-model="episode.Title.String" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <input type="number" min="1" class="form-control" name="episodeNumber" ng-model="episode.Number.Int64" placeholder="Episode Number" required>
+                    <label>Episode Number</label>
+                    <input type="number" min="1" class="form-control" name="episodeNumber" ng-model="episode.Number.Int64" required>
                 </div>
                 <div class="form-group">
-                    <input type="number" min="1" class="form-control" name="season" ng-model="episode.Season.Int64" placeholder="Season" required>
+                    <label>Season</label>
+                    <input type="number" min="1" class="form-control" name="season" ng-model="episode.Season.Int64" required>
                 </div>
                 <div class="form-group">
+                    <label>Show</label>
                     <select name="showId" class="form-control" ng-model="episode.ShowId.Int64" ng-options="show.Id as show.Title for show in shows" required>
                         <option></option>
                     </select>

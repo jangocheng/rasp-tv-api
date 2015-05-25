@@ -115,6 +115,9 @@ raspTv.run ['$rootScope', 'Player', ($rootScope, Player) ->
         ), true
 
     $rootScope.refreshSession = getSession
+
+    # Update session when moving to different pages.
+    $rootScope.$on '$routeChangeSuccess', getSession
 ]
 
 raspTv.controller 'navCtrl', ['$scope', '$location', '$rootScope', ($scope, $location, $rootScope) ->
@@ -122,7 +125,7 @@ raspTv.controller 'navCtrl', ['$scope', '$location', '$rootScope', ($scope, $loc
     $scope.isActive = (page) ->
         if page is 'movies' and /^\/movies/.test($location.path()) and not /play$/.test($location.path())
             true
-        else if page is 'shows' and /^\/shows/.test($location.path()) and not /play$/.test($location.path())
+        else if page is 'shows' and (/^\/shows/.test($location.path()) or /^\/episodes/.test($location.path())) and not /play$/.test($location.path())
             true
         else if page is 'play' and /play$/.test($location.path())
             true
@@ -265,8 +268,8 @@ raspTv.controller 'editMovieCtrl', ['$scope', 'movie', 'Movies', '$location', '$
 
     $scope.deleteMovie = (deleteFile) ->
         if $window.confirm('Are you sure you want to delete this movie?')
-                Movies.delete($scope.movie.Id, deleteFile).then () ->
-                    $scope.$emit 'alert',
+            Movies.delete($scope.movie.Id, deleteFile).then () ->
+                $scope.$emit 'alert',
                         type : 'success'
                         title : 'Success!'
                         msg : "#{$scope.movie.Title.String} was deleted."
@@ -306,7 +309,7 @@ raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$l
         $scope.episode.ShowId.Int64 = parseInt $scope.episode.ShowId.Int64, 10
         $scope.episode.ShowId.Valid = true
         Shows.saveEpisode($scope.episode).then () ->
-                $scope.$emit 'alert',
+            $scope.$emit 'alert',
                     type : 'success'
                     title : 'Success!'
                     msg : "#{$scope.episode.Title.String} was updated."
@@ -315,8 +318,8 @@ raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$l
 
     $scope.deleteEpisode = (deleteFile) ->
         if $window.confirm('Are you sure you want to delete this episode?')
-                Shows.deleteEpisode($scope.episode.Id, deleteFile).then () ->
-                    $scope.$emit 'alert',
+            Shows.deleteEpisode($scope.episode.Id, deleteFile).then () ->
+                $scope.$emit 'alert',
                         type : 'success'
                         title : 'Success!'
                         msg : "#{$scope.episode.Title.String} was deleted."
