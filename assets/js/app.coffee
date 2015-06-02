@@ -224,7 +224,8 @@ raspTv.controller 'seasonsCtrl', ['$scope', 'show', '$location', ($scope, show, 
     for e in show.Episodes when $scope.seasons.indexOf(e.Season.Int64) is -1
         $scope.seasons.push e.Season.Int64
 
-    $scope.seasons = $scope.seasons.sort()
+    $scope.seasons = $scope.seasons.sort (a, b) ->
+        parseInt(a, 10) - parseInt(b, 10)
 
     $scope.random = () ->
         season = $scope.seasons[Math.floor(Math.random() * $scope.seasons.length)]
