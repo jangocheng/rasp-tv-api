@@ -16,8 +16,8 @@
     <div class="col-xs-12">
         <p ng-if="shows.length === 0">No indexed shows</p>
         <ul ng-if="shows" class="list-group">
-            <a ng-href="#/shows/{{show.Id}}/seasons" ng-repeat="show in shows | filterRegex:title track by show.Id" class="list-group-item">
-                {{show.Title}}
+            <a ng-href="#/shows/{{show.id}}/seasons" ng-repeat="show in shows | filterRegex:title track by show.id" class="list-group-item">
+                {{show.title}}
             </a>
         </ul>
     </div>

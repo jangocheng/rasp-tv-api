@@ -8,8 +8,8 @@
         <h2>Movies</h2>
         <p ng-if="movies.length === 0">No movies to be indexed</p>
         <ul ng-if="movies" class="list-group">
-            <a ng-href="#/edit/movie/{{movie.Id}}" ng-repeat="movie in movies | filterRegex:search track by movie.Id" class="list-group-item">
-                {{movie.Filepath}}
+            <a ng-href="#/edit/movie/{{movie.id}}" ng-repeat="movie in movies | filterRegex:search track by movie.id" class="list-group-item">
+                {{movie.filepath}}
             </a>
         </ul>
     </div>
@@ -19,8 +19,8 @@
         <h2>Episodes</h2>
         <p ng-if="episodes.length === 0">No episodes to be indexed</p>
         <ul ng-if="episodes" class="list-group">
-            <a ng-href="#/edit/episode/{{episode.Id}}" ng-repeat="episode in episodes | filterRegex:search track by episode.Id" class="list-group-item">
-                {{episode.Filepath}}
+            <a ng-href="#/edit/episode/{{episode.id}}" ng-repeat="episode in episodes | filterRegex:search track by episode.id" class="list-group-item">
+                {{episode.filepath}}
             </a>
         </ul>
     </div>

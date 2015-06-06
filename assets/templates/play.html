@@ -1,7 +1,7 @@
 <div class="row">
     <div class="col-xs-12">
-        <h2 ng-if="!isShow">Now Playing: {{playing.Title.String}}</h2>
-        <h2 ng-if="isShow">{{playing.title}} - Season {{playing.episode.Season.Int64}} - {{playing.episode.Title.String}}</h2>
+        <h2 ng-if="!isShow">Now Playing: {{playing.title}}</h2>
+        <h2 ng-if="isShow">{{playing.title}} - Season {{playing.episode.season}} - {{playing.episode.title}}</h2>
     </div>
 </div>
 <div class="row">
@@ -17,7 +17,7 @@
                 <span class="glyphicon glyphicon-stop"></span>
             </button>
             <button type="button" ng-click="toggle()" class="btn btn-default">
-                <span ng-class="{'glyphicon-pause' : !session.IsPaused, 'glyphicon-play' : session.IsPaused}" class="glyphicon"></span>
+                <span ng-class="{'glyphicon-pause' : !session.isPaused, 'glyphicon-play' : session.isPaused}" class="glyphicon"></span>
             </button>
             <button type="button" ng-click="forward()" class="btn btn-default">
                 <span class="glyphicon glyphicon-forward"></span>

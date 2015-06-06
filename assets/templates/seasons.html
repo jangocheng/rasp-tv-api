@@ -1,6 +1,6 @@
 <div class="row">
     <div class="col-xs-12">
-        <h2>{{show.Title}}</h2>
+        <h2>{{show.title}}</h2>
         <button type="button" ng-click="random()" class="btn btn-default btn-block">
             <span class="glyphicon glyphicon-random"></span>
         </button>
@@ -9,8 +9,8 @@
 <br/>
 <div class="row">
     <div class="col-xs-12">
-        <ul ng-if="show.Episodes" class="list-group">
-            <a ng-repeat="season in seasons track by $index" ng-href="#/shows/{{show.Id}}/seasons/{{season}}/episodes" class="list-group-item">
+        <ul ng-if="show.episodes" class="list-group">
+            <a ng-repeat="season in seasons track by $index" ng-href="#/shows/{{show.id}}/seasons/{{season}}/episodes" class="list-group-item">
                 Season {{season}}
             </a>
         </ul>

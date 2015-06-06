@@ -112,7 +112,6 @@ func main() {
 		r.Delete("/session", api.ClearSession)
 		r.Post("/session", api.UpdateSession)
 	})
-	// router.Get("/auto", api.AutoIndex)
 
 	m.Action(router.Handle)
 	m.Run()

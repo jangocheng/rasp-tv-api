@@ -15,7 +15,7 @@ $(JSDIR)/%.js: $(JSDIR)/%.coffee
 watch:
 	coffee -wc assets/js/*.coffee
 
-rasp-tv: app.go api/helpers.go api/index.go api/movies.go api/scan.go api/shows.go api/player.go
+rasp-tv: app.go api/helpers.go api/index.go api/movies.go api/scan.go api/shows.go api/player.go data/movies.go data/shows.go data/sessions.go
 	go build
 
 deploy: $(JSDIR)/rasptv.min.js

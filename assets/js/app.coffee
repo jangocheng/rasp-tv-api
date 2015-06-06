@@ -16,12 +16,12 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
         resolve :
             playing : ['$route', 'Shows', 'Movies', ($route, Shows, Movies) ->
                 if $route.current.params.type is 'movies'
-                    Movies.get($route.current.params.id)
+                    Movies.get $route.current.params.id
                 else
                     Shows.getEpisode($route.current.params.id).then (episode) ->
-                        Shows.get(episode.ShowId.Int64).then (show) ->
-                            title : show.Title
-                            episode : episode
+                        Shows.get(episode.showId).then (show) ->
+                            title: show.title
+                            episode: episode
             ]
     $routeProvider.when '/:type/:id/mode',
         templateUrl : '/templates/mode.html'
@@ -29,11 +29,11 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
         resolve :
             title : ['$route', 'Movies', 'Shows', ($route, Movies, Shows) ->
                 if $route.current.params.type is 'movies'
-                    Movies.get($route.current.params.id).then (movie) -> movie.Title.String
+                    Movies.get($route.current.params.id).then (movie) -> movie.title
                 else
                     Shows.getEpisode($route.current.params.id).then (episode) ->
-                        Shows.get(episode.ShowId.Int64).then (show) ->
-                            "#{show.Title} - #{episode.Season.Int64} - #{episode.Title.String}"
+                        Shows.get(episode.showId).then (show) ->
+                            "#{show.title} - #{episode.season} - #{episode.title}"
             ]
     $routeProvider.when '/:type/:id/stream',
         templateUrl : '/templates/stream.html'
@@ -41,11 +41,11 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
         resolve :
             title : ['$route', 'Movies', 'Shows', ($route, Movies, Shows) ->
                 if $route.current.params.type is 'movies'
-                    Movies.get($route.current.params.id).then (movie) -> movie.Title.String
+                    Movies.get($route.current.params.id).then (movie) -> movie.title
                 else
                     Shows.getEpisode($route.current.params.id).then (episode) ->
-                        Shows.get(episode.ShowId.Int64).then (show) ->
-                            "#{show.Title} - #{episode.Season.Int64} - #{episode.Title.String}"
+                        Shows.get(episode.showId).then (show) ->
+                            "#{show.title} - #{episode.season} - #{episode.title}"
             ]
     $routeProvider.when '/shows',
         templateUrl : '/templates/shows.html'
@@ -104,7 +104,7 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
 raspTv.run ['$rootScope', 'Player', ($rootScope, Player) ->
     getSession = () ->
         Player.getSession().then (session) ->
-            $rootScope.session = if session.MovieId? or session.EpisodeId? then session else null
+            $rootScope.session = if session.movieId? or session.episodeId? then session else null
 
     # get session initially
     getSession().then () ->
@@ -137,10 +137,10 @@ raspTv.controller 'navCtrl', ['$scope', '$location', '$rootScope', ($scope, $loc
     setUpLink = () ->
         if not $scope.session? then return
 
-        if $scope.session.MovieId.Valid
-            $scope.nowPlayingLink = "#/movies/#{$scope.session.MovieId.Int64}/play"
-        else if $scope.session.EpisodeId.Valid
-            $scope.nowPlayingLink = "#/episodes/#{$scope.session.EpisodeId.Int64}/play"
+        if $scope.session.movieId?
+            $scope.nowPlayingLink = "#/movies/#{$scope.session.movieId}/play"
+        else if $scope.session.episodeId?
+            $scope.nowPlayingLink = "#/episodes/#{$scope.session.episodeId}/play"
 
     # update now playing link if the session changes
     $rootScope.$watch 'session', setUpLink, true
@@ -185,7 +185,7 @@ raspTv.controller 'playCtrl', ['$scope', 'Player', 'Shows', 'Movies', '$routePar
         $location.path '/'
 
     setup = () ->
-        $scope.toggle = () -> Player.toggle().then () -> $scope.session.IsPaused = not $scope.session.IsPaused
+        $scope.toggle = () -> Player.toggle().then () -> $scope.session.isPaused = not $scope.session.isPaused
         $scope.backward = Player.backward
         $scope.forward = Player.forward
         $scope.fastBackward = Player.fastBackward
@@ -221,27 +221,26 @@ raspTv.controller 'seasonsCtrl', ['$scope', 'show', '$location', ($scope, show, 
     $scope.show = show
 
     $scope.seasons = []
-    for e in show.Episodes when $scope.seasons.indexOf(e.Season.Int64) is -1
-        $scope.seasons.push e.Season.Int64
+    for e in show.episodes when $scope.seasons.indexOf(e.season) is -1
+        $scope.seasons.push e.season
 
     $scope.seasons = $scope.seasons.sort (a, b) ->
         parseInt(a, 10) - parseInt(b, 10)
 
     $scope.random = () ->
         season = $scope.seasons[Math.floor(Math.random() * $scope.seasons.length)]
-        episodes = (e for e in show.Episodes when e.Season.Int64 is season)
-        episodeId = episodes[Math.floor(Math.random() * episodes.length)].Id
+        episodes = show.episodes.filter (e) -> e.season is season
+        episodeId = episodes[Math.floor(Math.random() * episodes.length)].id
         $location.path "/episodes/#{episodeId}/mode"
 ]
 
 raspTv.controller 'episodesCtrl', ['$scope', 'show', '$routeParams', '$location', ($scope, show, $routeParams, $location) ->
     $scope.show     = show
     $scope.season   = parseInt $routeParams.season, 10
-    $scope.episodes = (e for e in show.Episodes when e.Season.Int64 is $scope.season).sort (a, b) ->
-        a.Number.Int64 - b.Number.Int64
+    $scope.episodes = show.episodes.filter((e) -> e.season is $scope.season).sort (a, b) -> a.number - b.number
 
     $scope.random = () ->
-        episodeId = $scope.episodes[Math.floor(Math.random() * $scope.episodes.length)].Id
+        episodeId = $scope.episodes[Math.floor(Math.random() * $scope.episodes.length)].id
         $location.path "/episodes/#{episodeId}/mode"
 ]
 
@@ -253,29 +252,28 @@ raspTv.controller 'editCtrl', ['$scope', 'nonIndexedMovies', 'nonIndexedEpisodes
 raspTv.controller 'editMovieCtrl', ['$scope', 'movie', 'Movies', '$location', '$window', ($scope, movie, Movies, $location, $window) ->
     $scope.movie = movie
 
-    if not $scope.movie.IsIndexed
-        $scope.movie.Title.String = $scope.movie.Filepath.substring($scope.movie.Filepath.lastIndexOf('/') + 1, $scope.movie.Filepath.lastIndexOf('.'))
+    if not $scope.movie.isIndexed
+        $scope.movie.title = $scope.movie.filepath.substring($scope.movie.filepath.lastIndexOf('/') + 1, $scope.movie.filepath.lastIndexOf('.'))
 
     $scope.save = () ->
-        $scope.movie.Title.Valid = true
         Movies.save($scope.movie).then () ->
             $scope.$emit 'alert',
                 type : 'success'
                 title : 'Success!'
-                msg : "#{$scope.movie.Title.String} was updated."
+                msg : "#{$scope.movie.title} was updated."
             Movies.clearCache()
-            if not $scope.movie.IsIndexed then $location.path('/edit')
+            if not $scope.movie.isIndexed then $location.path('/edit')
 
 
     $scope.deleteMovie = (deleteFile) ->
         if $window.confirm('Are you sure you want to delete this movie?')
-            Movies.delete($scope.movie.Id, deleteFile).then () ->
+            Movies.delete($scope.movie.id, deleteFile).then () ->
                 $scope.$emit 'alert',
                         type : 'success'
                         title : 'Success!'
-                        msg : "#{$scope.movie.Title.String} was deleted."
+                        msg : "#{$scope.movie.title} was deleted."
                     Movies.clearCache()
-                    if not $scope.movie.IsIndexed then $location.path('/edit')
+                    if not $scope.movie.isIndexed then $location.path('/edit')
 
 ]
 raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$location', '$window', ($scope, episode, shows, Shows, $location, $window) ->
@@ -283,17 +281,13 @@ raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$l
     $scope.shows = shows
 
     # Set default title
-    if not $scope.episode.IsIndexed
-        $scope.episode.Title.String = $scope.episode.Filepath.substring($scope.episode.Filepath.lastIndexOf('/') + 1, $scope.episode.Filepath.lastIndexOf('.'))
+    if not $scope.episode.isIndexed
+        $scope.episode.title = $scope.episode.filepath.substring($scope.episode.filepath.lastIndexOf('/') + 1, $scope.episode.filepath.lastIndexOf('.'))
 
         # Try to get season and episode number from filename
-        matches = /[sS](0?\d)[eE](0?\d+)/.exec($scope.episode.Filepath)[1..]
-        if matches[0]?
-            $scope.episode.Season.Int64 = parseInt matches[0], 10
-            $scope.episode.Season.Valid = true
-        if matches[1]?
-            $scope.episode.Number.Int64 = parseInt matches[1], 10
-            $scope.episode.Number.Valid = true
+        matches = /[sS](0?\d)[eE](0?\d+)/.exec($scope.episode.filepath)[1..]
+        if matches[0]? then $scope.episode.season = parseInt matches[0], 10
+        if matches[1]? then $scope.episode.number = parseInt matches[1], 10
 
     $scope.saveShow = () ->
         Shows.clearCache()
@@ -302,28 +296,24 @@ raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$l
             $scope.show = ''
 
     $scope.saveEpisode = () ->
-        $scope.episode.Title.Valid  = true
-        $scope.episode.Number.Int64 = parseInt $scope.episode.Number.Int64, 10
-        $scope.episode.Number.Valid = true
-        $scope.episode.Season.Int64 = parseInt $scope.episode.Season.Int64, 10
-        $scope.episode.Season.Valid = true
-        $scope.episode.ShowId.Int64 = parseInt $scope.episode.ShowId.Int64, 10
-        $scope.episode.ShowId.Valid = true
+        $scope.episode.number = parseInt $scope.episode.number, 10
+        $scope.episode.season = parseInt $scope.episode.season, 10
+        $scope.episode.showId = parseInt $scope.episode.showId, 10
         Shows.saveEpisode($scope.episode).then () ->
             $scope.$emit 'alert',
                     type : 'success'
                     title : 'Success!'
-                    msg : "#{$scope.episode.Title.String} was updated."
+                    msg : "#{$scope.episode.title} was updated."
                 Shows.clearCache()
-                if not $scope.episode.IsIndexed then $location.path('/edit')
+                if not $scope.episode.isIndexed then $location.path('/edit')
 
     $scope.deleteEpisode = (deleteFile) ->
         if $window.confirm('Are you sure you want to delete this episode?')
-            Shows.deleteEpisode($scope.episode.Id, deleteFile).then () ->
+            Shows.deleteEpisode($scope.episode.id, deleteFile).then () ->
                 $scope.$emit 'alert',
                         type : 'success'
                         title : 'Success!'
-                        msg : "#{$scope.episode.Title.String} was deleted."
+                        msg : "#{$scope.episode.title} was deleted."
                 Shows.clearCache()
-                if not $scope.episode.IsIndexed then $location.path('/edit')
+                if not $scope.episode.isIndexed then $location.path('/edit')
 ]

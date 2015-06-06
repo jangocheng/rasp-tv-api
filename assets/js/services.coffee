@@ -48,7 +48,7 @@ services.factory 'Movies', ['$resource', '$cacheFactory', ($resource, $cacheFact
         Movies.get({id : id}).$promise
 
     api.save = (movie) ->
-        Movies.save({id : movie.Id}, movie).$promise
+        Movies.save({id : movie.id}, movie).$promise
 
     api.play = (id) ->
         Movies.play({id : id}).$promise
@@ -121,7 +121,7 @@ services.factory 'Shows', ['$resource', '$cacheFactory', ($resource, $cacheFacto
         Shows.getEpisode({id : id}).$promise
 
     api.saveEpisode = (episode) ->
-        Shows.saveEpisode({id : episode.Id}, episode).$promise
+        Shows.saveEpisode({id : episode.id}, episode).$promise
 
     api.play = (id) ->
         Shows.playEpisode({id : id}).$promise
@@ -130,9 +130,7 @@ services.factory 'Shows', ['$resource', '$cacheFactory', ($resource, $cacheFacto
         Shows.scan().$promise
 
     api.getEpisodeFromShow = (show, episodeId) ->
-        for e in show.Episodes
-            if e.Id is episodeId
-                return e
+        show.episodes.filter (e) -> e.id is episodeId
 
     api.deleteEpisode = (id, deleteFile) ->
         Shows.deleteEpisode({id : id, file : deleteFile}).$promise
