@@ -17,14 +17,18 @@ import (
 )
 
 func GetAllEpisodes(r render.Render, req *http.Request, db *sql.DB, logger *log.Logger) {
-	isIndexed := req.URL.Query().Get("isIndexed") == "true"
 	var episodes []data.Episode
 	var err error
 
-	if isIndexed {
-		episodes, err = data.GetEpisodes("WHERE isIndexed = 1 ORDER BY title", db)
+	isIndexedParam := req.URL.Query().Get("isIndexed")
+	if len(isIndexedParam) != 0 {
+		if isIndexedParam == "true" {
+			episodes, err = data.GetEpisodes("WHERE isIndexed = 1 ORDER BY title", db)
+		} else {
+			episodes, err = data.GetEpisodes("WHERE isIndexed = 0", db)
+		}
 	} else {
-		episodes, err = data.GetEpisodes("WHERE isIndexed = 0", db)
+		episodes, err = data.GetEpisodes("", db)
 	}
 
 	if err != nil {
@@ -52,7 +56,7 @@ func GetEpisode(r render.Render, params martini.Params, db *sql.DB, logger *log.
 		return
 	}
 
-	r.JSON(200, episodes[0])
+	r.JSON(200, &episodes[0])
 }
 
 func PlayEpisode(r render.Render, params martini.Params, db *sql.DB, logger *log.Logger) {
@@ -148,10 +152,10 @@ func DeleteEpisode(r render.Render, req *http.Request, params martini.Params, db
 }
 
 func AddShow(r render.Render, req *http.Request, db *sql.DB, logger *log.Logger) {
-	show := data.Show{}
+	show := &data.Show{}
 	defer req.Body.Close()
 
-	if err := json.NewDecoder(req.Body).Decode(&show); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(show); err != nil {
 		logger.Println(errorMsg(err.Error()))
 		r.JSON(500, errorResponse(err))
 		return
@@ -202,13 +206,13 @@ func GetShow(r render.Render, params martini.Params, db *sql.DB, logger *log.Log
 	}
 
 	show.Episodes = episodes
-	r.JSON(200, show)
+	r.JSON(200, &show)
 }
 
 func SaveEpisode(r render.Render, req *http.Request, db *sql.DB, logger *log.Logger) {
-	episode := data.Episode{}
+	episode := &data.Episode{}
 
-	if err := json.NewDecoder(req.Body).Decode(&episode); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(episode); err != nil {
 		logger.Println(errorMsg(err.Error()))
 		r.JSON(500, errorResponse(err))
 		return

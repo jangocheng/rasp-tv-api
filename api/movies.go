@@ -16,14 +16,18 @@ import (
 )
 
 func GetAllMovies(r render.Render, req *http.Request, db *sql.DB, logger *log.Logger) {
-	isIndexed := req.URL.Query().Get("isIndexed") == "true"
 	var movies []data.Movie
 	var err error
 
-	if isIndexed {
-		movies, err = data.GetMovies("WHERE isIndexed = 1 ORDER BY title", db)
+	isIndexedParam := req.URL.Query().Get("isIndexed")
+	if len(isIndexedParam) != 0 {
+		if isIndexedParam == "true" {
+			movies, err = data.GetMovies("WHERE isIndexed = 1 ORDER BY title", db)
+		} else {
+			movies, err = data.GetMovies("WHERE isIndexed = 0", db)
+		}
 	} else {
-		movies, err = data.GetMovies("WHERE isIndexed = 0", db)
+		movies, err = data.GetMovies("", db)
 	}
 
 	if err != nil {
@@ -36,10 +40,10 @@ func GetAllMovies(r render.Render, req *http.Request, db *sql.DB, logger *log.Lo
 }
 
 func SaveMovie(r render.Render, req *http.Request, db *sql.DB, logger *log.Logger) {
-	movie := data.Movie{}
+	movie := &data.Movie{}
 	decoder := json.NewDecoder(req.Body)
 
-	if err := decoder.Decode(&movie); err != nil {
+	if err := decoder.Decode(movie); err != nil {
 		logger.Println(errorMsg(err.Error()))
 		r.JSON(500, errorResponse(err))
 		return
@@ -70,7 +74,7 @@ func GetMovie(r render.Render, params martini.Params, db *sql.DB, logger *log.Lo
 		return
 	}
 
-	r.JSON(200, movies[0])
+	r.JSON(200, &movies[0])
 }
 
 func PlayMovie(r render.Render, params martini.Params, db *sql.DB, logger *log.Logger) {
