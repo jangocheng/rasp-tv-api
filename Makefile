@@ -25,4 +25,4 @@ deploy: $(JSDIR)/rasptv.min.js
 	$(MAKE) clean
 
 $(JSDIR)/rasptv.min.js: $(JSLIBS) $(JSDIR)/services.js $(JSDIR)/app.js
-	cat $^ | uglifyjs -c -o $@ -
+	cat $^ | uglifyjs -c -m --screw-ie8 -o $@ -
