@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"net/http"
 	"os"
 	"os/user"
 
@@ -62,18 +63,28 @@ func main() {
 
 	db, err := sql.Open("sqlite3", config.DbPath)
 	check(err)
-	defer db.Close()
 
 	// clear session when app first starts
 	if err := data.ClearSessions(db); err != nil {
 		logger.Fatal(err)
 	}
+	db.Close()
 
 	m := martini.New()
 	m.Use(martini.Recovery())
 	m.Use(martini.Static(config.Root+"/assets", martini.StaticOptions{SkipLogging: true}))
 	m.Use(render.Renderer(render.Options{Delims: render.Delims{"[[", "]]"}, Directory: config.Root + "/views"}))
-	m.Map(db)
+	m.Use(func(res http.ResponseWriter, c martini.Context) {
+		db, err := sql.Open("sqlite3", config.DbPath)
+		if err != nil {
+			logger.Println("Failed to map sqlite db connection " + err.Error())
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		c.Map(db)
+		c.Next()
+		db.Close()
+	})
 	m.Map(logger)
 	m.Map(config)
 
