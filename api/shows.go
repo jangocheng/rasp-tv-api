@@ -168,7 +168,7 @@ func AddShow(r render.Render, req *http.Request, db *sql.DB, logger *log.Logger)
 		return
 	}
 
-	r.JSON(200, statusResponse("Success"))
+	r.JSON(200, show)
 }
 
 func GetShows(r render.Render, db *sql.DB, logger *log.Logger) {

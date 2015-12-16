@@ -24,6 +24,7 @@ func (s *Show) Add(db *sql.DB) (int64, error) {
 	if err != nil {
 		return -1, err
 	}
+	s.Id = id
 
 	return id, err
 }
@@ -150,6 +151,7 @@ func (e *Episode) UnmarshalJSON(data []byte) error {
 
 	return nil
 }
+
 func (e *Episode) Update(db *sql.DB) error {
 	if !e.ShowId.Valid {
 		return fmt.Errorf("Cannot update episode with invalid showId")

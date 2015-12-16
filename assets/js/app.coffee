@@ -285,7 +285,7 @@ raspTv.controller 'editEpisodeCtrl', ['$scope', 'episode', 'shows', 'Shows', '$l
         $scope.episode.title = $scope.episode.filepath.substring($scope.episode.filepath.lastIndexOf('/') + 1, $scope.episode.filepath.lastIndexOf('.'))
 
         # Try to get season and episode number from filename
-        results = /[sS](0?\d)[eE](0?\d+)/.exec($scope.episode.filepath)
+        results = /[sS](0?\d+)[eE](0?\d+)/.exec($scope.episode.filepath)
         matches = if results? then results[1..] else []
         if matches[0]? then $scope.episode.season = parseInt matches[0], 10
         if matches[1]? then $scope.episode.number = parseInt matches[1], 10
