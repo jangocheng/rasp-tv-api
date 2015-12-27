@@ -18,6 +18,8 @@ JSLIBS= \
 	$(JSDIR)/libs/angular-strap.tpl.js \
 	$(JSDIR)/libs/filter-regex.js
 
+GOSOURCE=$(shell find . -type f -name "*.go")
+
 .PHONY: clean watch
 
 all: $(JSDIR)/app.js $(JSDIR)/services.js rasp-tv
@@ -31,7 +33,7 @@ $(JSDIR)/%.js: $(JSDIR)/%.coffee
 watch:
 	coffee -wc assets/js/*.coffee
 
-rasp-tv: app.go api/helpers.go api/index.go api/movies.go api/scan.go api/shows.go api/player.go data/movies.go data/shows.go data/sessions.go
+rasp-tv: $(GOSOURCE)
 	go build
 
 deploy: $(JSDIR)/rasptv.min.js
