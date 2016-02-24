@@ -27,26 +27,26 @@ const (
 
 var pipe io.WriteCloser
 
-func startPlayer(path string, db *sql.DB) error {
+func startPlayer(path string) (int64, error) {
 	var err error
 	if err = stop(); err != nil {
-		return err
+		return -1, err
 	}
 
 	command := exec.Command("omxplayer", "-o", "hdmi", "-b", path)
 	pipe, err = command.StdinPipe()
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	err = command.Start()
 	go func() {
 		command.Wait()
-		data.ClearSessions(db)
+		// data.ClearSessions(db)
 		pipe = nil
 	}()
 
-	return err
+	return int64(command.Process.Pid), err
 }
 
 func RunPlayerCommand(r render.Render, params martini.Params, logger *log.Logger) {

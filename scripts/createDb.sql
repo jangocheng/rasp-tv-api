@@ -25,5 +25,6 @@ CREATE TABLE IF NOT EXISTS session (
     movieId INTEGER,
     episodeId INTEGER,
     isPaused INTEGER NOT NULL,
-    isPlaying INTEGER NOT NULL
+    isPlaying INTEGER NOT NULL,
+    pid INTEGER
 );

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/user"
+	"time"
 
 	_ "code.google.com/p/go-sqlite/go1/sqlite3"
 	"github.com/codegangsta/martini"
@@ -70,6 +71,10 @@ func main() {
 	}
 	db.Close()
 
+	if config.IsProduction {
+		go isPlayingPoller(config.DbPath, logger)
+	}
+
 	m := martini.New()
 	m.Use(martini.Recovery())
 	m.Use(martini.Static(config.Root+"/assets", martini.StaticOptions{SkipLogging: true}))
@@ -81,9 +86,9 @@ func main() {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		defer db.Close()
 		c.Map(db)
 		c.Next()
-		db.Close()
 	})
 	m.Map(logger)
 	m.Map(config)
@@ -126,4 +131,25 @@ func main() {
 
 	m.Action(router.Handle)
 	m.Run()
+}
+
+func isPlayingPoller(dbPath string, logger *log.Logger) {
+	db, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	for _ = range time.Tick(time.Second * 2) {
+		session, err := data.GetSession(db)
+		if err != nil {
+			logger.Println(err)
+			continue
+		}
+
+		if session.Pid.Valid {
+			if !data.IsProcessRunning(session.Pid.Int64) {
+				data.ClearSessions(db)
+			}
+		}
+	}
 }

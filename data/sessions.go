@@ -11,6 +11,7 @@ type Session struct {
 	EpisodeId sql.NullInt64
 	IsPaused  bool
 	IsPlaying bool
+	Pid       sql.NullInt64
 }
 
 func (s *Session) MarshalJSON() ([]byte, error) {
@@ -28,18 +29,27 @@ func (s *Session) MarshalJSON() ([]byte, error) {
 		episodeId = nil
 	}
 
+	var pid *int64
+	if s.Pid.Valid {
+		pid = &s.Pid.Int64
+	} else {
+		pid = nil
+	}
+
 	session := struct {
 		Id        int64  `json:"id"`
 		MovieId   *int64 `json:"movieId"`
 		EpisodeId *int64 `json:"episodeId"`
 		IsPaused  bool   `json:"isPaused"`
 		IsPlaying bool   `json:"isPlaying"`
+		Pid       *int64 `json:"pid"`
 	}{
 		s.Id,
 		movieId,
 		episodeId,
 		s.IsPaused,
 		s.IsPlaying,
+		pid,
 	}
 
 	return json.Marshal(&session)
@@ -52,6 +62,7 @@ func (s *Session) UnmarshalJSON(data []byte) error {
 		EpisodeId *int64
 		IsPaused  bool
 		IsPlaying bool
+		Pid       *int64
 	}
 
 	if err := json.Unmarshal(data, &session); err != nil {
@@ -72,6 +83,12 @@ func (s *Session) UnmarshalJSON(data []byte) error {
 		s.EpisodeId = sql.NullInt64{Valid: false}
 	} else {
 		s.EpisodeId = sql.NullInt64{Valid: true, Int64: *session.EpisodeId}
+	}
+
+	if session.Pid == nil {
+		s.Pid = sql.NullInt64{Valid: false}
+	} else {
+		s.Pid = sql.NullInt64{Valid: true, Int64: *session.Pid}
 	}
 
 	return nil
