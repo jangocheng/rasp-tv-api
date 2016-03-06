@@ -3,14 +3,12 @@ package data
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 )
 
 func IsProcessRunning(pid int64) bool {
 	pidStr := fmt.Sprintf("%d", pid)
-	statPath := filepath.Join("/proc", pidStr, "stat")
 
-	stat, err := os.Open(statPath)
+	stat, err := os.Open("/proc")
 	if err != nil {
 		return false
 	}

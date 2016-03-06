@@ -148,7 +148,10 @@ func isPlayingPoller(dbPath string, logger *log.Logger) {
 
 		if session.Pid.Valid {
 			if !data.IsProcessRunning(session.Pid.Int64) {
-				data.ClearSessions(db)
+				logger.Println("omxplayer has exited. Clearing session")
+				if err := data.ClearSessions(db); err != nil {
+					logger.Println(err)
+				}
 			}
 		}
 	}

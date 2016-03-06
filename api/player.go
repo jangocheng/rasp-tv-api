@@ -33,7 +33,7 @@ func startPlayer(path string) (int64, error) {
 		return -1, err
 	}
 
-	command := exec.Command("omxplayer", "-o", "hdmi", "-b", path)
+	command := exec.Command("omxplayer.bin", "-o", "hdmi", "-b", path)
 	pipe, err = command.StdinPipe()
 	if err != nil {
 		return -1, err
@@ -42,7 +42,6 @@ func startPlayer(path string) (int64, error) {
 	err = command.Start()
 	go func() {
 		command.Wait()
-		// data.ClearSessions(db)
 		pipe = nil
 	}()
 
