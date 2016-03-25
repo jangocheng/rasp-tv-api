@@ -177,12 +177,26 @@ func AddShow(r render.Render, req *http.Request, db *sql.DB, logger *log.Logger)
 	r.JSON(200, show)
 }
 
-func GetShows(r render.Render, db *sql.DB, logger *log.Logger) {
+func GetShows(r render.Render, req *http.Request, db *sql.DB, logger *log.Logger) {
 	shows, err := data.GetShows("ORDER BY title", db)
 	if err != nil {
 		logger.Println(errorMsg(err.Error()))
 		r.JSON(500, errorResponse(err))
 		return
+	}
+
+	allParam := req.URL.Query().Get("all")
+	if len(allParam) != 0 && allParam == "true" {
+		for i, show := range shows {
+			episodes, err := data.GetEpisodes(fmt.Sprintf("WHERE showId = %d", show.Id), db)
+			if err != nil {
+				logger.Println(errorMsg(err.Error()))
+				r.JSON(500, errorResponse(err))
+				return
+			}
+
+			shows[i].Episodes = episodes
+		}
 	}
 
 	r.JSON(200, shows)
