@@ -48,7 +48,7 @@ func startPlayer(path string) (int64, error) {
 	return int64(command.Process.Pid), err
 }
 
-func RunPlayerCommand(r render.Render, params martini.Params, logger *log.Logger) {
+func RunPlayerCommand(r render.Render, params martini.Params, db *sql.DB, logger *log.Logger) {
 	var err error
 	if pipe == nil {
 		err = fmt.Errorf("Player not started")
@@ -67,6 +67,16 @@ func RunPlayerCommand(r render.Render, params martini.Params, logger *log.Logger
 
 	switch cmd {
 	case TOGGLE:
+		session, e := data.GetSession(db)
+		if e != nil {
+			err = e
+			break
+		}
+		session.IsPaused = !session.IsPaused
+		if e = session.Save(db); e != nil {
+			err = e
+			break
+		}
 		_, err = fmt.Fprint(pipe, "p")
 	case BACKWARD:
 		_, err = fmt.Fprint(pipe, "\x5b\x44")
