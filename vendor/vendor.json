@@ -6,29 +6,25 @@
 			"checksumSHA1": "EmwC9bQrIb/A2yMRF80wnxhrsIo=",
 			"path": "github.com/codegangsta/inject",
 			"revision": "4b8172520a03fa190f427bbd284db01b459bfce7",
-			"revisionTime": "2014-06-30T23:14:07Z",
-			"tree": true
+			"revisionTime": "2014-06-30T23:14:07Z"
 		},
 		{
-			"checksumSHA1": "utMT3fEgCyA+3Wpp6WH2y4cabHI=",
+			"checksumSHA1": "wFNuauOOcgQqW0CX1R0fnLDcTrc=",
 			"path": "github.com/codegangsta/martini",
 			"revision": "6d22115736ff94392c11684f7cbe1a5143430ee3",
-			"revisionTime": "2014-07-12T13:26:45Z",
-			"tree": true
+			"revisionTime": "2014-07-12T13:26:45Z"
 		},
 		{
-			"checksumSHA1": "ROkK9Ddl+y4mKffSYba9c1YFMQI=",
+			"checksumSHA1": "Stb1XtodG+3O22Qk6CVo5Ej/lw8=",
 			"path": "github.com/go-martini/martini",
 			"revision": "ab1248205f79d286d7ce99c8b69be576e6b5eb11",
-			"revisionTime": "2014-08-04T19:57:47Z",
-			"tree": true
+			"revisionTime": "2014-08-04T19:57:47Z"
 		},
 		{
-			"checksumSHA1": "hoQ58ka80PuvUY5SPP9PZq9nUto=",
+			"checksumSHA1": "uFaYHqC8ATCnvl7EnrvRY3vj7GI=",
 			"path": "github.com/martini-contrib/render",
 			"revision": "b65063311fac6cbf84d3538f5715f7847e648322",
-			"revisionTime": "2014-07-08T15:05:04Z",
-			"tree": true
+			"revisionTime": "2014-07-08T15:05:04Z"
 		},
 		{
 			"checksumSHA1": "ocEB5LRjYD+0z8m1QwFQSkc73QE=",
@@ -41,8 +37,7 @@
 			"checksumSHA1": "9+vWcz0ojrzgL657LyziGRW5n2M=",
 			"path": "github.com/oxtoacart/bpool",
 			"revision": "0f78ff9152c03745d1a47c9023af1b424e202c07",
-			"revisionTime": "2014-06-10T01:22:39Z",
-			"tree": true
+			"revisionTime": "2014-06-10T01:22:39Z"
 		}
 	],
 	"rootPath": "simongeeks.com/joe/rasp-tv"

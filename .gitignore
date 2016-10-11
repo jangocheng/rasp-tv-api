@@ -4,3 +4,5 @@ videos
 rasp-tv
 logs.txt
 raspTv.db
+vendor/*
+!vendor/vendor.json
