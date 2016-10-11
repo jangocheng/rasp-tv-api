@@ -2,16 +2,15 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"log"
 	"net/http"
 	"os"
 	"os/user"
 	"time"
 
-	_ "code.google.com/p/go-sqlite/go1/sqlite3"
 	"github.com/codegangsta/martini"
 	"github.com/martini-contrib/render"
+	_ "github.com/mxk/go-sqlite/sqlite3"
 	"simongeeks.com/joe/rasp-tv/api"
 	"simongeeks.com/joe/rasp-tv/data"
 )
@@ -32,18 +31,18 @@ func getConfig() (*api.Config, error) {
 			DbPath:       "raspTv.db",
 			Root:         "/Users/Joe/Projects/go/src/simongeeks.com/joe/rasp-tv",
 		}, nil
-	case "Joe": // raspberry pi
+	default: // raspberry pi
 		return &api.Config{
 			MoviePath:    "/media/passport/Movies",
 			ShowsPath:    "/media/passport/TV Shows",
 			IsProduction: martini.Env == "production",
 			LogPath:      "/var/log/rasp-tv/logs.txt",
 			DbPath:       "/home/joe/data/raspTv.db",
-			Root:         "/home/joe/go/src/simongeeks.com/joe/rasp-tv",
+			Root:         "/home/joe/workspace/go/src/simongeeks.com/joe/rasp-tv",
 		}, nil
 	}
 
-	return nil, errors.New("Could not find a username with a config file")
+	// return nil, errors.New("Could not find a username with a config file")
 }
 
 func check(err error) {

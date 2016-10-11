@@ -38,8 +38,7 @@ rasp-tv: $(GOSOURCE)
 
 deploy: $(JSDIR)/rasptv.min.js
 	rsync -avz --delete $(EXCLUDES) ./ ./dist
-	rsync -avz --delete ./dist/ joe@192.168.11.2:/home/joe/go/src/simongeeks.com/joe/rasp-tv
-	# @ssh joe@rpi "cd /home/joe/go/src/simongeeks.com/joe/rasp-tv && make rasp-tv"
+	rsync -avz --delete ./dist/ joe@192.168.11.16:/home/joe/workspace/go/src/simongeeks.com/joe/rasp-tv
 	$(MAKE) clean
 
 $(JSDIR)/rasptv.min.js: $(JSLIBS) $(JSDIR)/services.js $(JSDIR)/app.js

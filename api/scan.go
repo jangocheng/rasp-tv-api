@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"log"
 
-	_ "code.google.com/p/go-sqlite/go1/sqlite3"
 	"github.com/martini-contrib/render"
 	// "path/filepath"
 	// "regexp"

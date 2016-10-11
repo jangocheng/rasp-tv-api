@@ -9,7 +9,6 @@ import (
 	"os"
 	"strconv"
 
-	_ "code.google.com/p/go-sqlite/go1/sqlite3"
 	"github.com/codegangsta/martini"
 	"github.com/martini-contrib/render"
 	"simongeeks.com/joe/rasp-tv/data"
