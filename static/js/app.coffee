@@ -4,14 +4,14 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
     $httpProvider.interceptors.push 'errorInterceptor'
 
     $routeProvider.when '/movies',
-        templateUrl : '/templates/movies.html'
+        templateUrl : '/static/templates/movies.html'
         controller : 'movieCtrl'
         resolve :
             movies : ['Movies', (Movies) ->
                 Movies.getAll true
             ]
     $routeProvider.when '/:type/:id/play',
-        templateUrl : '/templates/play.html'
+        templateUrl : '/static/templates/play.html'
         controller : 'playCtrl'
         resolve :
             playing : ['$route', 'Shows', 'Movies', ($route, Shows, Movies) ->
@@ -24,7 +24,7 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
                             episode: episode
             ]
     $routeProvider.when '/:type/:id/mode',
-        templateUrl : '/templates/mode.html'
+        templateUrl : '/static/templates/mode.html'
         controller : 'modeCtrl'
         resolve :
             title : ['$route', 'Movies', 'Shows', ($route, Movies, Shows) ->
@@ -36,7 +36,7 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
                             "#{show.title} - #{episode.season} - #{episode.title}"
             ]
     $routeProvider.when '/:type/:id/stream',
-        templateUrl : '/templates/stream.html'
+        templateUrl : '/static/templates/stream.html'
         controller : 'streamCtrl'
         resolve :
             title : ['$route', 'Movies', 'Shows', ($route, Movies, Shows) ->
@@ -48,28 +48,28 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
                             "#{show.title} - #{episode.season} - #{episode.title}"
             ]
     $routeProvider.when '/shows',
-        templateUrl : '/templates/shows.html'
+        templateUrl : '/static/templates/shows.html'
         controller : 'showsCtrl'
         resolve :
             shows : ['Shows', (Shows) ->
                 Shows.getAll()
             ]
     $routeProvider.when '/shows/:id/seasons',
-        templateUrl : '/templates/seasons.html'
+        templateUrl : '/static/templates/seasons.html'
         controller : 'seasonsCtrl'
         resolve :
             show : ['$route', 'Shows', ($route, Shows) ->
                 Shows.get $route.current.params.id
             ]
     $routeProvider.when '/shows/:id/seasons/:season/episodes',
-        templateUrl : '/templates/episodes.html'
+        templateUrl : '/static/templates/episodes.html'
         controller : 'episodesCtrl'
         resolve :
             show : ['$route', 'Shows', ($route, Shows) ->
                 Shows.get $route.current.params.id
             ]
     $routeProvider.when '/edit',
-        templateUrl : '/templates/edit.html'
+        templateUrl : '/static/templates/edit.html'
         controller : 'editCtrl'
         resolve:
             nonIndexedMovies : ['Movies', (Movies) ->
@@ -81,14 +81,14 @@ raspTv.config ['$routeProvider', '$httpProvider', ($routeProvider, $httpProvider
                 Shows.getAllEpisodes false
             ]
     $routeProvider.when '/edit/movie/:id',
-        templateUrl : '/templates/editMovie.html'
+        templateUrl : '/static/templates/editMovie.html'
         controller : 'editMovieCtrl'
         resolve :
             movie : ['$route', 'Movies', ($route, Movies) ->
                 Movies.get $route.current.params.id
             ]
     $routeProvider.when '/edit/episode/:id',
-        templateUrl : '/templates/editEpisode.html'
+        templateUrl : '/static/templates/editEpisode.html'
         controller : 'editEpisodeCtrl'
         resolve :
             episode : ['$route', 'Shows', ($route, Shows) ->

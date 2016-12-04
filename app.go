@@ -2,15 +2,19 @@ package main
 
 import (
 	"database/sql"
+	"html/template"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/user"
+	"path/filepath"
 	"time"
 
-	"github.com/codegangsta/martini"
-	"github.com/martini-contrib/render"
+	"github.com/gorilla/mux"
 	_ "github.com/mxk/go-sqlite/sqlite3"
+	"github.com/rs/cors"
 	"simongeeks.com/joe/rasp-tv/api"
 	"simongeeks.com/joe/rasp-tv/data"
 )
@@ -26,7 +30,7 @@ func getConfig() (*api.Config, error) {
 		return &api.Config{
 			MoviePath:    "/Volumes/My Passport/Movies",
 			ShowsPath:    "/Volumes/My Passport/TV Shows",
-			IsProduction: martini.Env == "production",
+			IsProduction: os.Getenv("RASPTV_ENV") == "production",
 			LogPath:      "logs.txt",
 			DbPath:       "raspTv.db",
 			Root:         "/Users/Joe/Projects/go/src/simongeeks.com/joe/rasp-tv",
@@ -35,7 +39,7 @@ func getConfig() (*api.Config, error) {
 		return &api.Config{
 			MoviePath:    "/media/passport/Movies",
 			ShowsPath:    "/media/passport/TV Shows",
-			IsProduction: martini.Env == "production",
+			IsProduction: os.Getenv("RASPTV_ENV") == "production",
 			LogPath:      "/var/log/rasp-tv/logs.txt",
 			DbPath:       "/home/joe/data/raspTv.db",
 			Root:         "/home/joe/workspace/go/src/simongeeks.com/joe/rasp-tv",
@@ -55,16 +59,23 @@ func main() {
 	config, err := getConfig()
 	check(err)
 
+	// set up logging
 	logFile, err := os.OpenFile(config.LogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
 	check(err)
 	defer logFile.Close()
 
-	logger := log.New(logFile, "", log.Ldate|log.Ltime|log.Lshortfile)
+	var logWriter io.Writer
+	if !config.IsProduction {
+		logWriter = io.MultiWriter(os.Stdout, logFile)
+	} else {
+		logWriter = logFile
+	}
+	logger := log.New(logWriter, "", log.Ldate|log.Ltime|log.Lshortfile)
 
+	// clear session when app first starts
 	db, err := sql.Open("sqlite3", config.DbPath)
 	check(err)
 
-	// clear session when app first starts
 	if err := data.ClearSessions(db); err != nil {
 		logger.Fatal(err)
 	}
@@ -74,62 +85,61 @@ func main() {
 		go isPlayingPoller(config.DbPath, logger)
 	}
 
-	m := martini.New()
-	m.Use(martini.Recovery())
-	m.Use(martini.Static(config.Root+"/assets", martini.StaticOptions{SkipLogging: true}))
-	m.Use(render.Renderer(render.Options{Delims: render.Delims{"[[", "]]"}, Directory: config.Root + "/views"}))
-	m.Use(func(res http.ResponseWriter, c martini.Context) {
-		db, err := sql.Open("sqlite3", config.DbPath)
+	// handler creators
+	createHandler := func(handler api.ApiHandlerFunc) http.Handler {
+		return cors.Default().Handler(api.NewApiHandler(logger, config, handler))
+	}
+
+	createStreamHandler := func(handler api.StreamHandlerFunc) http.Handler {
+		return cors.Default().Handler(api.NewStreamHandler(logger, config, handler))
+	}
+
+	staticDir := filepath.Join(config.Root, "static")
+
+	// set up api routes
+	router := mux.NewRouter()
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
+	router.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
+		templatePath := filepath.Join(config.Root, "views", "index.tmpl")
+		data, err := ioutil.ReadFile(templatePath)
 		if err != nil {
-			logger.Println("Failed to map sqlite db connection " + err.Error())
-			http.Error(res, err.Error(), http.StatusInternalServerError)
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer db.Close()
-		c.Map(db)
-		c.Next()
-	})
-	m.Map(logger)
-	m.Map(config)
 
-	router := martini.NewRouter()
+		t, err := template.New("template").Delims("[[", "]]").Parse(string(data))
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-	router.Get("/", api.Index)
-	router.Group("/scan", func(r martini.Router) {
-		r.Get("/movies", api.ScanMovies)
-		r.Get("/episodes", api.ScanEpisodes)
+		if err := t.Execute(rw, config); err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
 	})
-	router.Get("/movies", api.GetAllMovies)
-	router.Group("/movies", func(r martini.Router) {
-		r.Get("/:id", api.GetMovie)
-		r.Get("/:id/play", api.PlayMovie)
-		r.Get("/:id/stream", api.StreamMovie)
-		r.Post("/:id", api.SaveMovie)
-		r.Delete("/:id", api.DeleteMovie)
-	})
-	router.Get("/shows", api.GetShows)
-	router.Group("/shows", func(r martini.Router) {
-		r.Get("/:id", api.GetShow)
-		r.Post("/add", api.AddShow)
-		r.Group("/episodes", func(episodeRouter martini.Router) {
-			episodeRouter.Get("/:id", api.GetEpisode)
-			episodeRouter.Get("/:id/play", api.PlayEpisode)
-			episodeRouter.Get("/:id/stream", api.StreamEpisode)
-			episodeRouter.Post("/:id", api.SaveEpisode)
-			episodeRouter.Delete("/:id", api.DeleteEpisode)
-		})
-	})
+	router.Handle("/scan/movies", createHandler(api.ScanMovies)).Methods("GET")
+	router.Handle("/scan/episodes", createHandler(api.ScanEpisodes)).Methods("GET")
+	router.Handle("/movies", createHandler(api.GetAllMovies)).Methods("GET")
+	router.Handle("/movies/{id}", createHandler(api.GetMovie)).Methods("GET")
+	router.Handle("/movies/{id}/play", createHandler(api.PlayMovie)).Methods("GET")
+	router.Handle("/movies/{id}/stream", createStreamHandler(api.StreamMovie)).Methods("GET")
+	router.Handle("/movies/{id}", createHandler(api.SaveMovie)).Methods("POST")
+	router.Handle("/movies/{id}", createHandler(api.DeleteMovie)).Methods("DELETE")
+	router.Handle("/shows", createHandler(api.GetShows)).Methods("GET")
+	router.Handle("/shows/{id}", createHandler(api.GetShow)).Methods("GET")
+	router.Handle("/shows/add", createHandler(api.AddShow)).Methods("POST")
+	router.Handle("/shows/episodes/{id}", createHandler(api.GetEpisode)).Methods("GET")
+	router.Handle("/shows/episodes/{id}/play", createHandler(api.PlayEpisode)).Methods("GET")
+	router.Handle("/shows/episodes/{id}/stream", createStreamHandler(api.StreamEpisode)).Methods("GET")
+	router.Handle("/shows/episodes/{id}", createHandler(api.SaveEpisode)).Methods("POST")
+	router.Handle("/shows/episodes/{id}", createHandler(api.DeleteEpisode)).Methods("DELETE")
+	router.Handle("/episodes", createHandler(api.GetAllEpisodes)).Methods("GET")
+	router.Handle("/player/command/{command}", createHandler(api.RunPlayerCommand)).Methods("GET")
+	router.Handle("/player/session", createHandler(api.NowPlaying)).Methods("GET")
+	router.Handle("/player/session", createHandler(api.ClearSession)).Methods("DELETE")
+	router.Handle("/player/session", createHandler(api.UpdateSession)).Methods("POST")
 
-	router.Get("/episodes", api.GetAllEpisodes)
-	router.Group("/player", func(r martini.Router) {
-		r.Get("/command/:command", api.RunPlayerCommand)
-		r.Get("/session", api.NowPlaying)
-		r.Delete("/session", api.ClearSession)
-		r.Post("/session", api.UpdateSession)
-	})
-
-	m.Action(router.Handle)
-	m.Run()
+	logger.Fatal(http.ListenAndServe(":3000", router))
 }
 
 func isPlayingPoller(dbPath string, logger *log.Logger) {

@@ -3,28 +3,16 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "EmwC9bQrIb/A2yMRF80wnxhrsIo=",
-			"path": "github.com/codegangsta/inject",
-			"revision": "4b8172520a03fa190f427bbd284db01b459bfce7",
-			"revisionTime": "2014-06-30T23:14:07Z"
+			"checksumSHA1": "g/V4qrXjUGG9B+e3hB+4NAYJ5Gs=",
+			"path": "github.com/gorilla/context",
+			"revision": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
+			"revisionTime": "2016-08-17T18:46:32Z"
 		},
 		{
-			"checksumSHA1": "wFNuauOOcgQqW0CX1R0fnLDcTrc=",
-			"path": "github.com/codegangsta/martini",
-			"revision": "6d22115736ff94392c11684f7cbe1a5143430ee3",
-			"revisionTime": "2014-07-12T13:26:45Z"
-		},
-		{
-			"checksumSHA1": "Stb1XtodG+3O22Qk6CVo5Ej/lw8=",
-			"path": "github.com/go-martini/martini",
-			"revision": "ab1248205f79d286d7ce99c8b69be576e6b5eb11",
-			"revisionTime": "2014-08-04T19:57:47Z"
-		},
-		{
-			"checksumSHA1": "uFaYHqC8ATCnvl7EnrvRY3vj7GI=",
-			"path": "github.com/martini-contrib/render",
-			"revision": "b65063311fac6cbf84d3538f5715f7847e648322",
-			"revisionTime": "2014-07-08T15:05:04Z"
+			"checksumSHA1": "urMd7A9QPAJYY0GZJL9qBhlUmD8=",
+			"path": "github.com/gorilla/mux",
+			"revision": "757bef944d0f21880861c2dd9c871ca543023cba",
+			"revisionTime": "2016-09-20T23:08:13Z"
 		},
 		{
 			"checksumSHA1": "ocEB5LRjYD+0z8m1QwFQSkc73QE=",
@@ -34,10 +22,22 @@
 			"tree": true
 		},
 		{
-			"checksumSHA1": "9+vWcz0ojrzgL657LyziGRW5n2M=",
-			"path": "github.com/oxtoacart/bpool",
-			"revision": "0f78ff9152c03745d1a47c9023af1b424e202c07",
-			"revisionTime": "2014-06-10T01:22:39Z"
+			"checksumSHA1": "LjPdvMphElL0GOVNQCsmZMVgWIw=",
+			"path": "github.com/rs/cors",
+			"revision": "a62a804a8a009876ca59105f7899938a1349f4b3",
+			"revisionTime": "2016-06-17T23:19:35Z"
+		},
+		{
+			"checksumSHA1": "hCRfPlNpqv8tvVivLzmXsoUOf1c=",
+			"path": "github.com/rs/xhandler",
+			"revision": "ed27b6fd65218132ee50cd95f38474a3d8a2cd12",
+			"revisionTime": "2016-06-18T19:32:21Z"
+		},
+		{
+			"checksumSHA1": "9jjO5GjLa0XF/nfWihF02RoH4qc=",
+			"path": "golang.org/x/net/context",
+			"revision": "6cdc0daab091c43fc46193327e0047b4f883c613",
+			"revisionTime": "2016-11-30T01:20:33Z"
 		}
 	],
 	"rootPath": "simongeeks.com/joe/rasp-tv"

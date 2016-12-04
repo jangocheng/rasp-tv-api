@@ -1,19 +1,16 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os/exec"
 	"strconv"
 
 	"simongeeks.com/joe/rasp-tv/data"
 
-	"github.com/codegangsta/martini"
-	"github.com/martini-contrib/render"
+	"github.com/gorilla/mux"
 )
 
 const (
@@ -48,32 +45,27 @@ func startPlayer(path string) (int64, error) {
 	return int64(command.Process.Pid), err
 }
 
-func RunPlayerCommand(r render.Render, params martini.Params, db *sql.DB, logger *log.Logger) {
+func RunPlayerCommand(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
 	var err error
 	if pipe == nil {
-		err = fmt.Errorf("Player not started")
-		logger.Println(errorMsg(err.Error()))
-		r.JSON(500, errorResponse(err))
-		return
+		return http.StatusInternalServerError, nil, fmt.Errorf("Player not started")
 	}
 
-	cmd, err := strconv.Atoi(params["command"])
+	cmdStr := mux.Vars(req)["command"]
+	cmd, err := strconv.Atoi(cmdStr)
 	if err != nil {
-		err = fmt.Errorf("Invalid command: %s", params["command"])
-		logger.Println(errorMsg(err.Error()))
-		r.JSON(500, errorResponse(err))
-		return
+		return http.StatusInternalServerError, nil, fmt.Errorf("Invalid command: %s", cmdStr)
 	}
 
 	switch cmd {
 	case TOGGLE:
-		session, e := data.GetSession(db)
+		session, e := data.GetSession(context.Db)
 		if e != nil {
 			err = e
 			break
 		}
 		session.IsPaused = !session.IsPaused
-		if e = session.Save(db); e != nil {
+		if e = session.Save(context.Db); e != nil {
 			err = e
 			break
 		}
@@ -91,59 +83,50 @@ func RunPlayerCommand(r render.Render, params martini.Params, db *sql.DB, logger
 	}
 
 	if err != nil {
-		logger.Println(errorMsg(err.Error()))
-		r.JSON(500, errorResponse(err))
+		return http.StatusInternalServerError, nil, err
 	}
+
+	return http.StatusOK, statusResponse("Success"), nil
 }
 
-func NowPlaying(r render.Render, db *sql.DB, logger *log.Logger) {
-	session, err := data.GetSession(db)
+func NowPlaying(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
+	session, err := data.GetSession(context.Db)
 	if err != nil {
-		logger.Println(errorMsg(err.Error()))
-		r.JSON(500, errorResponse(err))
-		return
+		return http.StatusInternalServerError, nil, err
 	}
 
 	if session.Id == 0 {
-		return
+		return http.StatusOK, nil, nil
 	}
 
-	r.JSON(200, session)
+	return http.StatusOK, session, nil
 }
 
-func ClearSession(r render.Render, db *sql.DB, logger *log.Logger) {
-	if err := data.ClearSessions(db); err != nil {
-		logger.Println(errorMsg(err.Error()))
-		r.JSON(500, errorResponse(err))
-		return
+func ClearSession(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
+	if err := data.ClearSessions(context.Db); err != nil {
+		return http.StatusInternalServerError, nil, err
 	}
 
-	r.JSON(200, statusResponse("Success"))
+	return http.StatusOK, statusResponse("Success"), nil
 }
 
-func UpdateSession(r render.Render, req *http.Request, db *sql.DB, logger *log.Logger) {
+func UpdateSession(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
 	defer req.Body.Close()
 	session := &data.Session{}
 
 	if err := json.NewDecoder(req.Body).Decode(session); err != nil {
-		logger.Println(errorMsg(err.Error()))
-		r.JSON(500, errorResponse(err))
-		return
+		return http.StatusInternalServerError, nil, err
 	}
 
-	if err := data.ClearSessions(db); err != nil {
-		logger.Println(errorMsg(err.Error()))
-		r.JSON(500, errorResponse(err))
-		return
+	if err := data.ClearSessions(context.Db); err != nil {
+		return http.StatusInternalServerError, nil, err
 	}
 
-	if err := session.Save(db); err != nil {
-		logger.Println(errorMsg(err.Error()))
-		r.JSON(500, errorResponse(err))
-		return
+	if err := session.Save(context.Db); err != nil {
+		return http.StatusInternalServerError, nil, err
 	}
 
-	r.JSON(200, session)
+	return http.StatusOK, session, nil
 }
 
 func stop() error {

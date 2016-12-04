@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,14 +41,6 @@ func findVideoFiles(rootPath string) ([]string, error) {
 	}
 
 	return videos, nil
-}
-
-func errorMsg(msg string) string {
-	return fmt.Sprintf("[Error] %s", msg)
-}
-
-func errorResponse(err error) map[string]string {
-	return map[string]string{"error": err.Error()}
 }
 
 func statusResponse(msg string) map[string]string {
