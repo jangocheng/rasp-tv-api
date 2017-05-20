@@ -6,5 +6,4 @@ type Config struct {
 	IsProduction bool
 	LogPath      string
 	DbPath       string
-	Root         string
 }

@@ -2,14 +2,11 @@ package main
 
 import (
 	"database/sql"
-	"html/template"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/user"
-	"path/filepath"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -33,7 +30,6 @@ func getConfig() (*api.Config, error) {
 			IsProduction: os.Getenv("RASPTV_ENV") == "production",
 			LogPath:      "logs.txt",
 			DbPath:       "raspTv.db",
-			Root:         "/Users/Joe/Projects/go/src/simongeeks.com/joe/rasp-tv",
 		}, nil
 	default: // raspberry pi
 		return &api.Config{
@@ -42,7 +38,6 @@ func getConfig() (*api.Config, error) {
 			IsProduction: os.Getenv("RASPTV_ENV") == "production",
 			LogPath:      "/var/log/rasp-tv/logs.txt",
 			DbPath:       "/home/joe/data/raspTv.db",
-			Root:         "/home/joe/workspace/go/src/simongeeks.com/joe/rasp-tv",
 		}, nil
 	}
 
@@ -94,29 +89,8 @@ func main() {
 		return cors.Default().Handler(api.NewStreamHandler(logger, config, handler))
 	}
 
-	staticDir := filepath.Join(config.Root, "static")
-
 	// set up api routes
 	router := mux.NewRouter()
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
-	router.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
-		templatePath := filepath.Join(config.Root, "views", "index.tmpl")
-		data, err := ioutil.ReadFile(templatePath)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		t, err := template.New("template").Delims("[[", "]]").Parse(string(data))
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if err := t.Execute(rw, config); err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-		}
-	})
 	router.Handle("/scan/movies", createHandler(api.ScanMovies)).Methods("GET")
 	router.Handle("/scan/episodes", createHandler(api.ScanEpisodes)).Methods("GET")
 	router.Handle("/movies", createHandler(api.GetAllMovies)).Methods("GET")
