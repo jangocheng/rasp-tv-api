@@ -1,4 +1,4 @@
-rasp-tv
+Overview
 =======
 
-A mobile web app that plays videos through my Raspberry Pi
+A Go REST api that can play/stream videos from my raspberry pi

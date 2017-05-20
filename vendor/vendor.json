@@ -15,11 +15,10 @@
 			"revisionTime": "2016-09-20T23:08:13Z"
 		},
 		{
-			"checksumSHA1": "ocEB5LRjYD+0z8m1QwFQSkc73QE=",
-			"path": "github.com/mxk/go-sqlite/sqlite3",
-			"revision": "167da9432e1f4602e95ea67b67051cfa34412e3f",
-			"revisionTime": "2014-06-11T21:49:08Z",
-			"tree": true
+			"checksumSHA1": "6ZV/m7lRaCJMopHqHHjmcOy9s2A=",
+			"path": "github.com/mattn/go-sqlite3",
+			"revision": "cf7286f069c3ef596efcc87781a4653a2e7607bd",
+			"revisionTime": "2017-04-07T15:46:27Z"
 		},
 		{
 			"checksumSHA1": "LjPdvMphElL0GOVNQCsmZMVgWIw=",

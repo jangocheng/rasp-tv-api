@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	_ "github.com/mxk/go-sqlite/sqlite3"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/rs/cors"
 	"github.com/simonjm/rasp-tv/api"
 	"github.com/simonjm/rasp-tv/data"
