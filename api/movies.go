@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"simongeeks.com/joe/rasp-tv/data"
+	"github.com/simonjm/rasp-tv/data"
 )
 
 func GetAllMovies(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {

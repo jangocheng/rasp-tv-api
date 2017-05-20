@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"sort"
 
-	"simongeeks.com/joe/rasp-tv/data"
+	"github.com/simonjm/rasp-tv/data"
 )
 
 func ScanMovies(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {

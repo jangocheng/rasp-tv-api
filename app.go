@@ -12,8 +12,8 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/mxk/go-sqlite/sqlite3"
 	"github.com/rs/cors"
-	"simongeeks.com/joe/rasp-tv/api"
-	"simongeeks.com/joe/rasp-tv/data"
+	"github.com/simonjm/rasp-tv/api"
+	"github.com/simonjm/rasp-tv/data"
 )
 
 func getConfig() (*api.Config, error) {
