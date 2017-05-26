@@ -106,7 +106,7 @@ func NowPlaying(context *Context, rw http.ResponseWriter, req *http.Request) (in
 		return http.StatusInternalServerError, nil, err
 	}
 
-	if session.Id == 0 {
+	if session.ID == 0 {
 		return http.StatusOK, nil, nil
 	}
 

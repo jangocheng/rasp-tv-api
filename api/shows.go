@@ -75,7 +75,7 @@ func PlayEpisode(context *Context, rw http.ResponseWriter, req *http.Request) (i
 	}
 
 	session := data.Session{
-		EpisodeId: sql.NullInt64{Int64: episode.Id, Valid: true},
+		EpisodeID: sql.NullInt64{Int64: episode.ID, Valid: true},
 		IsPlaying: true,
 		IsPaused:  false,
 		Pid:       sql.NullInt64{Int64: pid, Valid: true},
@@ -144,7 +144,7 @@ func GetShows(context *Context, rw http.ResponseWriter, req *http.Request) (int,
 	if len(allParam) != 0 && allParam == "true" {
 		// if the all parameter is present then return all of the episodes for each show
 		for i, show := range shows {
-			episodes, err := context.Db.GetEpisodes("WHERE showId = ?", show.Id)
+			episodes, err := context.Db.GetEpisodes("WHERE showId = ?", show.ID)
 			if err != nil {
 				return http.StatusInternalServerError, nil, err
 			}

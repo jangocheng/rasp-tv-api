@@ -7,9 +7,9 @@ import (
 
 // Session represents a session record from the database
 type Session struct {
-	Id        int64
-	MovieId   sql.NullInt64
-	EpisodeId sql.NullInt64
+	ID        int64
+	MovieID   sql.NullInt64
+	EpisodeID sql.NullInt64
 	IsPaused  bool
 	IsPlaying bool
 	Pid       sql.NullInt64
@@ -19,18 +19,18 @@ type Session struct {
 
 // MarshalJSON implements Marshaller interface
 func (s *Session) MarshalJSON() ([]byte, error) {
-	var movieId *int64
-	if s.MovieId.Valid {
-		movieId = &s.MovieId.Int64
+	var movieID *int64
+	if s.MovieID.Valid {
+		movieID = &s.MovieID.Int64
 	} else {
-		movieId = nil
+		movieID = nil
 	}
 
-	var episodeId *int64
-	if s.EpisodeId.Valid {
-		episodeId = &s.EpisodeId.Int64
+	var episodeID *int64
+	if s.EpisodeID.Valid {
+		episodeID = &s.EpisodeID.Int64
 	} else {
-		episodeId = nil
+		episodeID = nil
 	}
 
 	var pid *int64
@@ -41,16 +41,16 @@ func (s *Session) MarshalJSON() ([]byte, error) {
 	}
 
 	session := struct {
-		Id        int64  `json:"id"`
-		MovieId   *int64 `json:"movieId"`
-		EpisodeId *int64 `json:"episodeId"`
+		ID        int64  `json:"id"`
+		MovieID   *int64 `json:"movieId"`
+		EpisodeID *int64 `json:"episodeId"`
 		IsPaused  bool   `json:"isPaused"`
 		IsPlaying bool   `json:"isPlaying"`
 		Pid       *int64 `json:"pid"`
 	}{
-		s.Id,
-		movieId,
-		episodeId,
+		s.ID,
+		movieID,
+		episodeID,
 		s.IsPaused,
 		s.IsPlaying,
 		pid,
@@ -62,9 +62,9 @@ func (s *Session) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements Unmarshaller interface
 func (s *Session) UnmarshalJSON(data []byte) error {
 	var session struct {
-		Id        int64
-		MovieId   *int64
-		EpisodeId *int64
+		ID        int64
+		MovieID   *int64
+		EpisodeID *int64
 		IsPaused  bool
 		IsPlaying bool
 		Pid       *int64
@@ -74,20 +74,20 @@ func (s *Session) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	s.Id = session.Id
+	s.ID = session.ID
 	s.IsPaused = session.IsPaused
 	s.IsPlaying = session.IsPlaying
 
-	if session.MovieId == nil {
-		s.MovieId = sql.NullInt64{Valid: false}
+	if session.MovieID == nil {
+		s.MovieID = sql.NullInt64{Valid: false}
 	} else {
-		s.MovieId = sql.NullInt64{Valid: true, Int64: *session.MovieId}
+		s.MovieID = sql.NullInt64{Valid: true, Int64: *session.MovieID}
 	}
 
-	if session.EpisodeId == nil {
-		s.EpisodeId = sql.NullInt64{Valid: false}
+	if session.EpisodeID == nil {
+		s.EpisodeID = sql.NullInt64{Valid: false}
 	} else {
-		s.EpisodeId = sql.NullInt64{Valid: true, Int64: *session.EpisodeId}
+		s.EpisodeID = sql.NullInt64{Valid: true, Int64: *session.EpisodeID}
 	}
 
 	if session.Pid == nil {

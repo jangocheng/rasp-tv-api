@@ -56,7 +56,7 @@ func (raspDb *RaspTvDatabase) GetMovies(filter string, params ...interface{}) ([
 
 	for rows.Next() {
 		m := Movie{}
-		if err := rows.Scan(&m.Id, &m.Title, &m.Filepath, &m.Length, &m.IsIndexed); err != nil {
+		if err := rows.Scan(&m.ID, &m.Title, &m.Filepath, &m.Length, &m.IsIndexed); err != nil {
 			return nil, err
 		}
 		movies = append(movies, m)
@@ -91,7 +91,7 @@ func (raspDb *RaspTvDatabase) AddMovie(movie *Movie) error {
 	if err != nil {
 		return err
 	}
-	movie.Id = id
+	movie.ID = id
 
 	return nil
 }
@@ -102,13 +102,13 @@ func (raspDb *RaspTvDatabase) UpdateMovie(movie *Movie) error {
 		return fmt.Errorf("Cannot update movie with invalid title")
 	}
 
-	_, err := raspDb.db.Exec("UPDATE movies SET title = ?, isIndexed = 1 WHERE id = ?", movie.Title, movie.Id)
+	_, err := raspDb.db.Exec("UPDATE movies SET title = ?, isIndexed = 1 WHERE id = ?", movie.Title, movie.ID)
 	return err
 }
 
 // DeleteMovie deletes a movie record from the database
 func (raspDb *RaspTvDatabase) DeleteMovie(movie *Movie) error {
-	_, err := raspDb.db.Exec("DELETE FROM movies WHERE Id = ?", movie.Id)
+	_, err := raspDb.db.Exec("DELETE FROM movies WHERE Id = ?", movie.ID)
 	return err
 }
 
@@ -123,7 +123,7 @@ func (raspDb *RaspTvDatabase) AddShow(show *Show) error {
 	if err != nil {
 		return err
 	}
-	show.Id = id
+	show.ID = id
 
 	return nil
 }
@@ -133,7 +133,7 @@ func (raspDb *RaspTvDatabase) AddEpisode(episode *Episode) error {
 	query := `
 		INSERT INTO episodes (showId, title, episodeNumber, season, filepath, isIndexed)
 		VALUES (?, ?, ?, ?, ?, ?)`
-	result, err := raspDb.db.Exec(query, episode.ShowId, episode.Title, episode.Number, episode.Season, episode.Filepath, episode.IsIndexed)
+	result, err := raspDb.db.Exec(query, episode.ShowID, episode.Title, episode.Number, episode.Season, episode.Filepath, episode.IsIndexed)
 	if err != nil {
 		return err
 	}
@@ -142,14 +142,14 @@ func (raspDb *RaspTvDatabase) AddEpisode(episode *Episode) error {
 	if err != nil {
 		return err
 	}
-	episode.Id = id
+	episode.ID = id
 
 	return nil
 }
 
 // UpdateEpisode updates an episode record in the database
 func (raspDb *RaspTvDatabase) UpdateEpisode(episode *Episode) error {
-	if !episode.ShowId.Valid {
+	if !episode.ShowID.Valid {
 		return fmt.Errorf("Cannot update episode with invalid showId")
 	}
 
@@ -166,14 +166,14 @@ func (raspDb *RaspTvDatabase) UpdateEpisode(episode *Episode) error {
 	}
 
 	query := "UPDATE episodes SET showId = ?, title = ?, episodeNumber = ?, season = ?, isIndexed = 1 WHERE id = ?"
-	_, err := raspDb.db.Exec(query, episode.ShowId, episode.Title, episode.Number, episode.Season, episode.Id)
+	_, err := raspDb.db.Exec(query, episode.ShowID, episode.Title, episode.Number, episode.Season, episode.ID)
 	return err
 }
 
 // DeleteEpisode deletes an episode from the database
 func (raspDb *RaspTvDatabase) DeleteEpisode(episode *Episode) error {
 	var err error
-	_, err = raspDb.db.Exec("DELETE FROM episodes WHERE Id = ?;", episode.Id)
+	_, err = raspDb.db.Exec("DELETE FROM episodes WHERE Id = ?;", episode.ID)
 	return err
 }
 
@@ -192,7 +192,7 @@ func (raspDb *RaspTvDatabase) GetShows(filter string, params ...interface{}) ([]
 
 	for rows.Next() {
 		show := Show{}
-		rows.Scan(&show.Id, &show.Title)
+		rows.Scan(&show.ID, &show.Title)
 		shows = append(shows, show)
 	}
 
@@ -228,7 +228,7 @@ func (raspDb *RaspTvDatabase) GetEpisodes(filter string, params ...interface{}) 
 
 	for rows.Next() {
 		e := Episode{}
-		if err := rows.Scan(&e.Id, &e.Title, &e.Number, &e.Season, &e.Filepath, &e.Length, &e.IsIndexed, &e.ShowId); err != nil {
+		if err := rows.Scan(&e.ID, &e.Title, &e.Number, &e.Season, &e.Filepath, &e.Length, &e.IsIndexed, &e.ShowID); err != nil {
 			return nil, err
 		}
 		episodes = append(episodes, e)
@@ -254,7 +254,7 @@ func (raspDb *RaspTvDatabase) GetEpisodeByID(id int64) (*Episode, error) {
 // SaveSession inserts a new session record into the database
 func (raspDb *RaspTvDatabase) SaveSession(session *Session) error {
 	query := "INSERT INTO session (movieId, episodeId, isPaused, isPlaying, pid) VALUES (?, ?, ?, ?, ?)"
-	_, err := raspDb.db.Exec(query, session.MovieId, session.EpisodeId, session.IsPaused, session.IsPlaying, session.Pid)
+	_, err := raspDb.db.Exec(query, session.MovieID, session.EpisodeID, session.IsPaused, session.IsPlaying, session.Pid)
 	return err
 }
 
@@ -262,7 +262,7 @@ func (raspDb *RaspTvDatabase) SaveSession(session *Session) error {
 func (raspDb *RaspTvDatabase) GetSession() (*Session, error) {
 	session := Session{}
 	query := "SELECT id, movieId, episodeId, isPaused, isPlaying, pid FROM session ORDER BY id DESC LIMIT 1"
-	err := raspDb.db.QueryRow(query).Scan(&session.Id, &session.MovieId, &session.EpisodeId, &session.IsPaused, &session.IsPlaying, &session.Pid)
+	err := raspDb.db.QueryRow(query).Scan(&session.ID, &session.MovieID, &session.EpisodeID, &session.IsPaused, &session.IsPlaying, &session.Pid)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}

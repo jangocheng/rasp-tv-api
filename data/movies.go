@@ -7,7 +7,7 @@ import (
 
 // Movie represents a movie record from the database
 type Movie struct {
-	Id        int64
+	ID        int64
 	Title     sql.NullString
 	Filepath  string
 	Length    sql.NullFloat64
@@ -33,13 +33,13 @@ func (m *Movie) MarshalJSON() ([]byte, error) {
 	}
 
 	mov := struct {
-		Id        int64    `json:"id"`
+		ID        int64    `json:"id"`
 		Title     *string  `json:"title"`
 		Filepath  string   `json:"filepath"`
 		Length    *float64 `json:"length"`
 		IsIndexed bool     `json:"isIndexed"`
 	}{
-		m.Id,
+		m.ID,
 		title,
 		m.Filepath,
 		length,
@@ -52,7 +52,7 @@ func (m *Movie) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements Unmarshaller interface
 func (m *Movie) UnmarshalJSON(data []byte) error {
 	var mov struct {
-		Id        int64
+		ID        int64
 		Title     *string
 		Filepath  string
 		Length    *float64
@@ -63,7 +63,7 @@ func (m *Movie) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	m.Id = mov.Id
+	m.ID = mov.ID
 	m.Filepath = mov.Filepath
 	m.IsIndexed = mov.IsIndexed
 

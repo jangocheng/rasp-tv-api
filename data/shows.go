@@ -7,7 +7,7 @@ import (
 
 // Show represents a show record from the database
 type Show struct {
-	Id       int64     `json:"id"`
+	ID       int64     `json:"id"`
 	Title    string    `json:"title"`
 	Episodes []Episode `json:"episodes,omitempty"`
 }
@@ -16,8 +16,8 @@ type Show struct {
 
 // Episode represents an episode record from the database
 type Episode struct {
-	Id        int64
-	ShowId    sql.NullInt64
+	ID        int64
+	ShowID    sql.NullInt64
 	Title     sql.NullString
 	Number    sql.NullInt64
 	Season    sql.NullInt64
@@ -28,11 +28,11 @@ type Episode struct {
 
 // MarshalJSON implements Marshaller interface
 func (e *Episode) MarshalJSON() ([]byte, error) {
-	var showId *int64
-	if e.ShowId.Valid {
-		showId = &e.ShowId.Int64
+	var showID *int64
+	if e.ShowID.Valid {
+		showID = &e.ShowID.Int64
 	} else {
-		showId = nil
+		showID = nil
 	}
 
 	var title *string
@@ -64,8 +64,8 @@ func (e *Episode) MarshalJSON() ([]byte, error) {
 	}
 
 	episode := struct {
-		Id        int64    `json:"id"`
-		ShowId    *int64   `json:"showId"`
+		ID        int64    `json:"id"`
+		ShowID    *int64   `json:"showId"`
 		Title     *string  `json:"title"`
 		Number    *int64   `json:"number"`
 		Season    *int64   `json:"season"`
@@ -73,8 +73,8 @@ func (e *Episode) MarshalJSON() ([]byte, error) {
 		Length    *float64 `json:"length"`
 		IsIndexed bool     `json:"isIndexed"`
 	}{
-		e.Id,
-		showId,
+		e.ID,
+		showID,
 		title,
 		number,
 		season,
@@ -89,8 +89,8 @@ func (e *Episode) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements Unmarshaller interface
 func (e *Episode) UnmarshalJSON(data []byte) error {
 	var episode struct {
-		Id        int64
-		ShowId    *int64
+		ID        int64
+		ShowID    *int64
 		Title     *string
 		Number    *int64
 		Season    *int64
@@ -103,14 +103,14 @@ func (e *Episode) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	e.Id = episode.Id
+	e.ID = episode.ID
 	e.Filepath = episode.Filepath
 	e.IsIndexed = episode.IsIndexed
 
-	if episode.ShowId == nil {
-		e.ShowId = sql.NullInt64{Valid: false}
+	if episode.ShowID == nil {
+		e.ShowID = sql.NullInt64{Valid: false}
 	} else {
-		e.ShowId = sql.NullInt64{Valid: true, Int64: *episode.ShowId}
+		e.ShowID = sql.NullInt64{Valid: true, Int64: *episode.ShowID}
 	}
 
 	if episode.Title == nil {

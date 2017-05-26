@@ -94,7 +94,7 @@ func PlayMovie(context *Context, rw http.ResponseWriter, req *http.Request) (int
 	}
 
 	session := data.Session{
-		MovieId:   sql.NullInt64{Int64: movie.Id, Valid: true},
+		MovieID:   sql.NullInt64{Int64: movie.ID, Valid: true},
 		IsPlaying: true,
 		IsPaused:  false,
 		Pid:       sql.NullInt64{Int64: pid, Valid: true},
