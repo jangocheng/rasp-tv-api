@@ -45,18 +45,18 @@ func (a *StreamHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	a.handler(&context, rw, req)
 }
 
-// ApiHandlerFunc a custom handler function that includes a Context and returns a status code, the response body and an error
-type ApiHandlerFunc func(*Context, http.ResponseWriter, *http.Request) (int, interface{}, error)
+// HandlerFunc a custom handler function that includes a Context and returns a status code, the response body and an error
+type HandlerFunc func(*Context, http.ResponseWriter, *http.Request) (int, interface{}, error)
 
-// ApiHandler a Handler for all routes that return data
-type ApiHandler struct {
+// Handler a Handler for all routes that return data
+type Handler struct {
 	logger  *log.Logger
 	config  *Config
-	handler ApiHandlerFunc
+	handler HandlerFunc
 }
 
 // ServeHTTP implements the Handler interface for ApiHandler
-func (a *ApiHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (a *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// these routes always return JSON
 	rw.Header().Add("Content-Type", "application/json")
 
@@ -90,9 +90,9 @@ func (a *ApiHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(rw).Encode(data)
 }
 
-// NewApiHandler constructs an ApiHandler
-func NewApiHandler(logger *log.Logger, config *Config, handler ApiHandlerFunc) *ApiHandler {
-	return &ApiHandler{
+// NewAPIHandler constructs an ApiHandler
+func NewAPIHandler(logger *log.Logger, config *Config, handler HandlerFunc) *Handler {
+	return &Handler{
 		logger:  logger,
 		config:  config,
 		handler: handler,

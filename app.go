@@ -80,8 +80,8 @@ func main() {
 	}
 
 	// handler creators
-	createHandler := func(handler api.ApiHandlerFunc) http.Handler {
-		return cors.Default().Handler(api.NewApiHandler(logger, config, handler))
+	createHandler := func(handler api.HandlerFunc) http.Handler {
+		return cors.Default().Handler(api.NewAPIHandler(logger, config, handler))
 	}
 
 	createStreamHandler := func(handler api.StreamHandlerFunc) http.Handler {
