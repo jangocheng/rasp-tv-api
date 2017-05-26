@@ -6,26 +6,25 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 
 	"github.com/simonjm/rasp-tv/data"
-
-	"github.com/gorilla/mux"
 )
 
+// GetAllEpisodes route for gettting all episodes from the database
 func GetAllEpisodes(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
 	var episodes []data.Episode
 	var err error
 
+	db := context.Db
 	isIndexedParam := req.URL.Query().Get("isIndexed")
 	if len(isIndexedParam) != 0 {
 		if isIndexedParam == "true" {
-			episodes, err = data.GetEpisodes("WHERE isIndexed = 1 ORDER BY title", context.Db)
+			episodes, err = db.GetEpisodes("WHERE isIndexed = 1 ORDER BY title")
 		} else {
-			episodes, err = data.GetEpisodes("WHERE isIndexed = 0", context.Db)
+			episodes, err = db.GetEpisodes("WHERE isIndexed = 0")
 		}
 	} else {
-		episodes, err = data.GetEpisodes("", context.Db)
+		episodes, err = db.GetEpisodes("")
 	}
 
 	if err != nil {
@@ -35,102 +34,90 @@ func GetAllEpisodes(context *Context, rw http.ResponseWriter, req *http.Request)
 	return http.StatusOK, episodes, nil
 }
 
+// GetEpisode route for getting a single episode by id
 func GetEpisode(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
-	id := mux.Vars(req)["id"]
-	episodes, err := data.GetEpisodes("WHERE id = "+id, context.Db)
-
+	id, err := parseIDFromReq(req)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	if len(episodes) != 1 {
-		return http.StatusNotFound, nil, fmt.Errorf("Could not find episode with id: %s", id)
+	episode, err := context.Db.GetEpisodeByID(id)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
 	}
 
-	return http.StatusOK, &episodes[0], nil
+	if episode == nil {
+		return http.StatusNotFound, nil, fmt.Errorf("Could not find episode with id: %d", id)
+	}
+
+	return http.StatusOK, episode, nil
 }
 
+// PlayEpisode route that plays the episode with omxplayer
 func PlayEpisode(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
-	id := mux.Vars(req)["id"]
-	episodes, err := data.GetEpisodes("WHERE id = "+id, context.Db)
-
+	id, err := parseIDFromReq(req)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	if len(episodes) != 1 {
-		return http.StatusNotFound, nil, fmt.Errorf("Could not find episode with id: %s", id)
+	episode, err := context.Db.GetEpisodeByID(id)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
 	}
 
-	pid, err := startPlayer(episodes[0].Filepath)
+	if episode == nil {
+		return http.StatusNotFound, nil, fmt.Errorf("Could not find episode with id: %d", id)
+	}
+
+	pid, err := startPlayer(episode.Filepath)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
 	session := data.Session{
-		EpisodeId: sql.NullInt64{Int64: episodes[0].Id, Valid: true},
+		EpisodeId: sql.NullInt64{Int64: episode.Id, Valid: true},
 		IsPlaying: true,
 		IsPaused:  false,
 		Pid:       sql.NullInt64{Int64: pid, Valid: true},
 	}
-	if err = session.Save(context.Db); err != nil {
+	if err = context.Db.SaveSession(&session); err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	return http.StatusOK, statusResponse(fmt.Sprintf("Playing episode at %s", episodes[0].Filepath)), nil
+	return http.StatusOK, statusResponse(fmt.Sprintf("Playing episode at %s", episode.Filepath)), nil
 }
 
-// func StreamEpisode(r render.Render, params martini.Params, res http.ResponseWriter, req *http.Request, db *sql.DB, logger *log.Logger) {
-// 	episodes, err := data.GetEpisodes("WHERE id = "+params["id"], db)
-//
-// 	if err != nil {
-// 		logger.Println(errorMsg(err.Error()))
-// 		r.JSON(500, errorResponse(err))
-// 		return
-// 	}
-//
-// 	if len(episodes) != 1 {
-// 		err = fmt.Errorf("Could not find episode with id: %s", params["id"])
-// 		logger.Println(errorMsg(err.Error()))
-// 		r.JSON(404, errorResponse(err))
-// 		return
-// 	}
-//
-// 	http.ServeFile(res, req, episodes[0].Filepath)
-// }
-
+// DeleteEpisode route that deletes an episode by id
 func DeleteEpisode(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
-	id := mux.Vars(req)["id"]
-
-	var err error
-	if _, err = strconv.ParseInt(id, 10, 64); err != nil {
-		return http.StatusInternalServerError, nil, err
-	}
-
-	deleteFile := req.URL.Query().Get("file") == "true"
-	episodes, err := data.GetEpisodes("WHERE id = "+id, context.Db)
-
+	id, err := parseIDFromReq(req)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	if len(episodes) != 1 {
-		return http.StatusNotFound, nil, fmt.Errorf("Could not find episode with id: %s", id)
+	deleteFile := req.URL.Query().Get("file") == "true"
+	episode, err := context.Db.GetEpisodeByID(id)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	if episode == nil {
+		return http.StatusNotFound, nil, fmt.Errorf("Could not find episode with id: %d", id)
 	}
 
 	if deleteFile {
-		if err = os.Remove(episodes[0].Filepath); err != nil {
+		if err = os.Remove(episode.Filepath); err != nil {
 			return http.StatusInternalServerError, nil, err
 		}
 	}
 
-	if err = episodes[0].DeleteEpisode(context.Db); err != nil {
+	if err = context.Db.DeleteEpisode(episode); err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
 	return http.StatusOK, statusResponse("Deleted episode"), nil
 }
 
+// AddShow route for saving a show to the database. The data to save is deserialized from the request body
 func AddShow(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
 	show := &data.Show{}
 	defer req.Body.Close()
@@ -139,24 +126,25 @@ func AddShow(context *Context, rw http.ResponseWriter, req *http.Request) (int, 
 		return http.StatusInternalServerError, nil, err
 	}
 
-	var err error
-	if _, err = show.Add(context.Db); err != nil {
+	if err := context.Db.AddShow(show); err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
 	return http.StatusOK, show, nil
 }
 
+// GetShows route to get all of the shows from the database
 func GetShows(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
-	shows, err := data.GetShows("ORDER BY title", context.Db)
+	shows, err := context.Db.GetShows("ORDER BY title")
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
 	allParam := req.URL.Query().Get("all")
 	if len(allParam) != 0 && allParam == "true" {
+		// if the all parameter is present then return all of the episodes for each show
 		for i, show := range shows {
-			episodes, err := data.GetEpisodes(fmt.Sprintf("WHERE showId = %d", show.Id), context.Db)
+			episodes, err := context.Db.GetEpisodes("WHERE showId = ?", show.Id)
 			if err != nil {
 				return http.StatusInternalServerError, nil, err
 			}
@@ -168,19 +156,23 @@ func GetShows(context *Context, rw http.ResponseWriter, req *http.Request) (int,
 	return http.StatusOK, shows, nil
 }
 
+// GetShow gets a single show with all of the episodes from the database
 func GetShow(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
-	id := mux.Vars(req)["id"]
-	shows, err := data.GetShows("WHERE id = "+id, context.Db)
+	id, err := parseIDFromReq(req)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	if len(shows) != 1 {
-		return http.StatusNotFound, nil, fmt.Errorf("Could not find show with id: %s", id)
+	show, err := context.Db.GetShowByID(id)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
 	}
 
-	show := shows[0]
-	episodes, err := data.GetEpisodes("WHERE showId = "+id, context.Db)
+	if show == nil {
+		return http.StatusNotFound, nil, fmt.Errorf("Could not find show with id: %d", id)
+	}
+
+	episodes, err := context.Db.GetEpisodes("WHERE showId = ?", id)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
@@ -189,6 +181,7 @@ func GetShow(context *Context, rw http.ResponseWriter, req *http.Request) (int, 
 	return http.StatusOK, show, nil
 }
 
+// SaveEpisode route for saving an episode to the database. The data to save is deserialized from the request body
 func SaveEpisode(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
 	episode := &data.Episode{}
 
@@ -196,28 +189,34 @@ func SaveEpisode(context *Context, rw http.ResponseWriter, req *http.Request) (i
 		return http.StatusInternalServerError, nil, err
 	}
 
-	if err := episode.Update(context.Db); err != nil {
+	if err := context.Db.UpdateEpisode(episode); err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
 	return http.StatusOK, statusResponse(fmt.Sprintf("%s saved successfully", episode.Title.String)), nil
 }
 
+// StreamEpisode route that streams the video file for an episode
 func StreamEpisode(context *Context, rw http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"]
-	episodes, err := data.GetEpisodes("WHERE id = "+id, context.Db)
-
+	id, err := parseIDFromReq(req)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		context.Logger.Printf("[Error] - %s\n", err)
 		return
 	}
 
-	if len(episodes) != 1 {
+	episode, err := context.Db.GetEpisodeByID(id)
+	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
-		context.Logger.Printf("[Error] - Could not find episode with id: %s\n", id)
+		context.Logger.Printf("[Error] - %s\n", err)
 		return
 	}
 
-	http.ServeFile(rw, req, episodes[0].Filepath)
+	if episode == nil {
+		rw.WriteHeader(http.StatusNotFound)
+		context.Logger.Printf("[Error] - Could not find episode with id: %d\n", id)
+		return
+	}
+
+	http.ServeFile(rw, req, episode.Filepath)
 }

@@ -6,25 +6,26 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 
-	"github.com/gorilla/mux"
 	"github.com/simonjm/rasp-tv/data"
 )
 
+// GetAllMovies route for getting all of the movies from the databse
 func GetAllMovies(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
 	var movies []data.Movie
 	var err error
 
+	db := context.Db
+
 	isIndexedParam := req.URL.Query().Get("isIndexed")
 	if len(isIndexedParam) != 0 {
 		if isIndexedParam == "true" {
-			movies, err = data.GetMovies("WHERE isIndexed = 1 ORDER BY title", context.Db)
+			movies, err = db.GetMovies("WHERE isIndexed = 1 ORDER BY title")
 		} else {
-			movies, err = data.GetMovies("WHERE isIndexed = 0", context.Db)
+			movies, err = db.GetMovies("WHERE isIndexed = 0")
 		}
 	} else {
-		movies, err = data.GetMovies("", context.Db)
+		movies, err = db.GetMovies("")
 	}
 
 	if err != nil {
@@ -34,6 +35,7 @@ func GetAllMovies(context *Context, rw http.ResponseWriter, req *http.Request) (
 	return http.StatusOK, movies, nil
 }
 
+// SaveMovie route for saving a movie to the database. The data to save is deserialized from the request body
 func SaveMovie(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
 	movie := &data.Movie{}
 	decoder := json.NewDecoder(req.Body)
@@ -42,107 +44,121 @@ func SaveMovie(context *Context, rw http.ResponseWriter, req *http.Request) (int
 		return http.StatusInternalServerError, nil, err
 	}
 
-	if err := movie.Update(context.Db); err != nil {
+	if err := context.Db.UpdateMovie(movie); err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
 	return http.StatusOK, statusResponse(fmt.Sprintf("%s saved successfully", movie.Title.String)), nil
 }
 
+// GetMovie route to get a single movie by id
 func GetMovie(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
-	id := mux.Vars(req)["id"]
-	movies, err := data.GetMovies("WHERE id = "+id, context.Db)
-
+	id, err := parseIDFromReq(req)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	if len(movies) != 1 {
-		err = fmt.Errorf("Could not find movie with id: %s", id)
+	movie, err := context.Db.GetMovieByID(id)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	if movie == nil {
+		err = fmt.Errorf("Could not find movie with id: %d", id)
 		return http.StatusNotFound, nil, err
 	}
 
-	return http.StatusOK, &movies[0], nil
+	return http.StatusOK, movie, nil
 }
 
+// PlayMovie route that plays a movie with omxplayer
 func PlayMovie(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
-	id := mux.Vars(req)["id"]
-	movies, err := data.GetMovies("WHERE id = "+id, context.Db)
-
+	id, err := parseIDFromReq(req)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	if len(movies) != 1 {
-		err = fmt.Errorf("Could not find movie with id: %s", id)
+	movie, err := context.Db.GetMovieByID(id)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	if movie == nil {
+		err = fmt.Errorf("Could not find movie with id: %d", id)
 		return http.StatusNotFound, nil, err
 	}
 
-	pid, err := startPlayer(movies[0].Filepath)
+	pid, err := startPlayer(movie.Filepath)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
 	session := data.Session{
-		MovieId:   sql.NullInt64{Int64: movies[0].Id, Valid: true},
+		MovieId:   sql.NullInt64{Int64: movie.Id, Valid: true},
 		IsPlaying: true,
 		IsPaused:  false,
 		Pid:       sql.NullInt64{Int64: pid, Valid: true},
 	}
-	if err = session.Save(context.Db); err != nil {
+
+	if err = context.Db.SaveSession(&session); err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	return http.StatusOK, statusResponse(fmt.Sprintf("Playing movie at %s", movies[0].Filepath)), nil
+	return http.StatusOK, statusResponse(fmt.Sprintf("Playing movie at %s", movie.Filepath)), nil
 }
 
+// DeleteMovie deletes a movie by id
 func DeleteMovie(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
-	id := mux.Vars(req)["id"]
-
-	var err error
-	if _, err = strconv.ParseInt(id, 10, 64); err != nil {
-		return http.StatusInternalServerError, nil, err
-	}
-
-	deleteFile := req.URL.Query().Get("file") == "true"
-	movies, err := data.GetMovies("WHERE id = "+id, context.Db)
+	id, err := parseIDFromReq(req)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	if len(movies) != 1 {
-		err = fmt.Errorf("Could not find movie with id: %s", id)
+	deleteFile := req.URL.Query().Get("file") == "true"
+	movie, err := context.Db.GetMovieByID(id)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	if movie == nil {
+		err = fmt.Errorf("Could not find movie with id: %d", id)
 		return http.StatusNotFound, nil, err
 	}
 
 	if deleteFile {
-		if err = os.Remove(movies[0].Filepath); err != nil {
+		if err = os.Remove(movie.Filepath); err != nil {
 			return http.StatusInternalServerError, nil, err
 		}
 	}
 
-	if err = movies[0].Delete(context.Db); err != nil {
+	if err = context.Db.DeleteMovie(movie); err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
 	return http.StatusOK, statusResponse("Deleted movie"), nil
 }
 
+// StreamMovie route that streams a movie file
 func StreamMovie(context *Context, rw http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"]
-	movies, err := data.GetMovies("WHERE id = "+id, context.Db)
-
+	id, err := parseIDFromReq(req)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		context.Logger.Printf("[Error] - %s\n", err)
 		return
 	}
 
-	if len(movies) != 1 {
+	movie, err := context.Db.GetMovieByID(id)
+	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
-		context.Logger.Printf("[Error] - Could not find movie with id: %s\n", id)
+		context.Logger.Printf("[Error] - %s\n", err)
 		return
 	}
 
-	http.ServeFile(rw, req, movies[0].Filepath)
+	if movie == nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		context.Logger.Printf("[Error] - Could not find movie with id: %d\n", id)
+		return
+	}
+
+	http.ServeFile(rw, req, movie.Filepath)
 }

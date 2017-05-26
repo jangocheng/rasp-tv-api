@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// IsProcessRunning checks if pid is running
 func IsProcessRunning(pid int64) bool {
 	pidStr := fmt.Sprintf("%d", pid)
 

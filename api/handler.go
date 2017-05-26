@@ -1,28 +1,34 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
+
+	"github.com/simonjm/rasp-tv/data"
 )
 
+// Context struct that holds other objects that are needed by every handler
 type Context struct {
 	Logger *log.Logger
 	Config *Config
-	Db     *sql.DB
+	Db     data.RaspTvDataFetcher
 }
 
+// StreamHandlerFunc a custom handler function that includes a Context but doesn't return anything
 type StreamHandlerFunc func(*Context, http.ResponseWriter, *http.Request)
 
+// StreamHandler a Handler for the streaming routes
 type StreamHandler struct {
 	logger  *log.Logger
 	config  *Config
 	handler StreamHandlerFunc
 }
 
+// ServeHTTP implements the Handler interface for StreamHandler
 func (a *StreamHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	db, err := sql.Open("sqlite3", a.config.DbPath)
+	// initialize a connection to the database
+	db, err := data.NewRaspTvDatabase(a.config.DbPath)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		a.logger.Printf("[Error] - %s\n", err)
@@ -39,19 +45,25 @@ func (a *StreamHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	a.handler(&context, rw, req)
 }
 
+// ApiHandlerFunc a custom handler function that includes a Context and returns a status code, the response body and an error
 type ApiHandlerFunc func(*Context, http.ResponseWriter, *http.Request) (int, interface{}, error)
 
+// ApiHandler a Handler for all routes that return data
 type ApiHandler struct {
 	logger  *log.Logger
 	config  *Config
 	handler ApiHandlerFunc
 }
 
+// ServeHTTP implements the Handler interface for ApiHandler
 func (a *ApiHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	db, err := sql.Open("sqlite3", a.config.DbPath)
+	// these routes always return JSON
+	rw.Header().Add("Content-Type", "application/json")
+
+	// initialize a connection to the database
+	db, err := data.NewRaspTvDatabase(a.config.DbPath)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
-		rw.Header().Add("Content-Type", "application/json")
 		a.logger.Printf("[Error] - %s\n", err)
 		json.NewEncoder(rw).Encode(map[string]string{"error": err.Error()})
 		return
@@ -64,9 +76,9 @@ func (a *ApiHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		Db:     db,
 	}
 
+	// calls the custom handler func
 	status, data, err := a.handler(&context, rw, req)
 	rw.WriteHeader(status)
-	rw.Header().Add("Content-Type", "application/json")
 
 	if err != nil {
 		a.logger.Printf("[Error] - HTTP %d - %s\n", status, err)
@@ -74,9 +86,11 @@ func (a *ApiHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// serialize and send back the result of the handler func
 	json.NewEncoder(rw).Encode(data)
 }
 
+// NewApiHandler constructs an ApiHandler
 func NewApiHandler(logger *log.Logger, config *Config, handler ApiHandlerFunc) *ApiHandler {
 	return &ApiHandler{
 		logger:  logger,
@@ -85,6 +99,7 @@ func NewApiHandler(logger *log.Logger, config *Config, handler ApiHandlerFunc) *
 	}
 }
 
+// NewStreamHandler constructs a StreamHandler
 func NewStreamHandler(logger *log.Logger, config *Config, handler StreamHandlerFunc) *StreamHandler {
 	return &StreamHandler{
 		logger:  logger,

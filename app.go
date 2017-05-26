@@ -1,7 +1,7 @@
 package main
 
 import (
-	"database/sql"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -16,6 +16,7 @@ import (
 	"github.com/simonjm/rasp-tv/data"
 )
 
+// getConfig create struct to hold all of the configuration based on current user
 func getConfig() (*api.Config, error) {
 	user, err := user.Current()
 	if err != nil {
@@ -40,8 +41,6 @@ func getConfig() (*api.Config, error) {
 			DbPath:       "/home/joe/data/raspTv.db",
 		}, nil
 	}
-
-	// return nil, errors.New("Could not find a username with a config file")
 }
 
 func check(err error) {
@@ -68,10 +67,10 @@ func main() {
 	logger := log.New(logWriter, "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// clear session when app first starts
-	db, err := sql.Open("sqlite3", config.DbPath)
+	db, err := data.NewRaspTvDatabase(config.DbPath)
 	check(err)
 
-	if err := data.ClearSessions(db); err != nil {
+	if err := db.ClearSession(); err != nil {
 		logger.Fatal(err)
 	}
 	db.Close()
@@ -97,33 +96,41 @@ func main() {
 	router.Handle("/movies/{id}", createHandler(api.GetMovie)).Methods("GET")
 	router.Handle("/movies/{id}/play", createHandler(api.PlayMovie)).Methods("GET")
 	router.Handle("/movies/{id}/stream", createStreamHandler(api.StreamMovie)).Methods("GET")
-	router.Handle("/movies/{id}", createHandler(api.SaveMovie)).Methods("POST")
-	router.Handle("/movies/{id}", createHandler(api.DeleteMovie)).Methods("DELETE")
+	router.Handle("/movies/{id}", createHandler(api.SaveMovie)).Methods("POST", "OPTIONS")
+	router.Handle("/movies/{id}", createHandler(api.DeleteMovie)).Methods("DELETE", "OPTIONS")
 	router.Handle("/shows", createHandler(api.GetShows)).Methods("GET")
 	router.Handle("/shows/{id}", createHandler(api.GetShow)).Methods("GET")
-	router.Handle("/shows/add", createHandler(api.AddShow)).Methods("POST")
+	router.Handle("/shows/add", createHandler(api.AddShow)).Methods("POST", "OPTIONS")
 	router.Handle("/shows/episodes/{id}", createHandler(api.GetEpisode)).Methods("GET")
 	router.Handle("/shows/episodes/{id}/play", createHandler(api.PlayEpisode)).Methods("GET")
 	router.Handle("/shows/episodes/{id}/stream", createStreamHandler(api.StreamEpisode)).Methods("GET")
-	router.Handle("/shows/episodes/{id}", createHandler(api.SaveEpisode)).Methods("POST")
-	router.Handle("/shows/episodes/{id}", createHandler(api.DeleteEpisode)).Methods("DELETE")
+	router.Handle("/shows/episodes/{id}", createHandler(api.SaveEpisode)).Methods("POST", "OPTIONS")
+	router.Handle("/shows/episodes/{id}", createHandler(api.DeleteEpisode)).Methods("DELETE", "OPTIONS")
 	router.Handle("/episodes", createHandler(api.GetAllEpisodes)).Methods("GET")
 	router.Handle("/player/command/{command}", createHandler(api.RunPlayerCommand)).Methods("GET")
 	router.Handle("/player/session", createHandler(api.NowPlaying)).Methods("GET")
-	router.Handle("/player/session", createHandler(api.ClearSession)).Methods("DELETE")
-	router.Handle("/player/session", createHandler(api.UpdateSession)).Methods("POST")
+	router.Handle("/player/session", createHandler(api.ClearSession)).Methods("DELETE", "OPTIONS")
+	router.Handle("/player/session", createHandler(api.UpdateSession)).Methods("POST", "OPTIONS")
 
-	logger.Fatal(http.ListenAndServe(":3000", router))
+	// get port from the environment
+	port := os.Getenv("RASPTV_PORT")
+	if len(port) == 0 {
+		port = "3000"
+	}
+	logger.Printf("Server started on port %s\n", port)
+	logger.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), router))
 }
 
+// isPlayingPoller clears the session when the omxplayer process that matches
+// the pid is not longer running
 func isPlayingPoller(dbPath string, logger *log.Logger) {
-	db, err := sql.Open("sqlite3", dbPath)
+	db, err := data.NewRaspTvDatabase(dbPath)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
 	for _ = range time.Tick(time.Second * 2) {
-		session, err := data.GetSession(db)
+		session, err := db.GetSession()
 		if err != nil {
 			logger.Println(err)
 			continue
@@ -132,7 +139,7 @@ func isPlayingPoller(dbPath string, logger *log.Logger) {
 		if session.Pid.Valid {
 			if !data.IsProcessRunning(session.Pid.Int64) {
 				logger.Println("omxplayer has exited. Clearing session")
-				if err := data.ClearSessions(db); err != nil {
+				if err := db.ClearSession(); err != nil {
 					logger.Println(err)
 				}
 			}

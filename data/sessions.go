@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 )
 
+// Session represents a session record from the database
 type Session struct {
 	Id        int64
 	MovieId   sql.NullInt64
@@ -14,6 +15,9 @@ type Session struct {
 	Pid       sql.NullInt64
 }
 
+// Methods below are used so we don't send sql.Null* values back
+
+// MarshalJSON implements Marshaller interface
 func (s *Session) MarshalJSON() ([]byte, error) {
 	var movieId *int64
 	if s.MovieId.Valid {
@@ -55,6 +59,7 @@ func (s *Session) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&session)
 }
 
+// UnmarshalJSON implements Unmarshaller interface
 func (s *Session) UnmarshalJSON(data []byte) error {
 	var session struct {
 		Id        int64
@@ -92,24 +97,4 @@ func (s *Session) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
-}
-
-func (s *Session) Save(db *sql.DB) error {
-	_, err := db.Exec("INSERT INTO session (movieId, episodeId, isPaused, isPlaying, pid) VALUES (?, ?, ?, ?, ?)", s.MovieId, s.EpisodeId, s.IsPaused, s.IsPlaying, s.Pid)
-	return err
-}
-
-func GetSession(db *sql.DB) (*Session, error) {
-	session := Session{}
-	err := db.QueryRow("SELECT id, movieId, episodeId, isPaused, isPlaying, pid FROM session ORDER BY id DESC LIMIT 1").Scan(&session.Id, &session.MovieId, &session.EpisodeId, &session.IsPaused, &session.IsPlaying, &session.Pid)
-	if err != nil && err != sql.ErrNoRows {
-		return nil, err
-	}
-
-	return &session, nil
-}
-
-func ClearSessions(db *sql.DB) error {
-	_, err := db.Exec("DELETE FROM session")
-	return err
 }
