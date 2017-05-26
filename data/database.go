@@ -44,7 +44,7 @@ func NewRaspTvDatabase(dbPath string) (*RaspTvDatabase, error) {
 // GetMovies gets all movies from the database with the optional filter
 func (raspDb *RaspTvDatabase) GetMovies(filter string, params ...interface{}) ([]Movie, error) {
 	movies := make([]Movie, 0, 70)
-	rows, err := raspDb.db.Query("SELECT id, title, filepath, length, isIndexed FROM movies "+filter, params)
+	rows, err := raspDb.db.Query("SELECT id, title, filepath, length, isIndexed FROM movies "+filter, params...)
 	if err != nil && err != io.EOF {
 		return nil, err
 	}
@@ -180,7 +180,7 @@ func (raspDb *RaspTvDatabase) DeleteEpisode(episode *Episode) error {
 // GetShows gets all shows from the database with the optional filter
 func (raspDb *RaspTvDatabase) GetShows(filter string, params ...interface{}) ([]Show, error) {
 	shows := make([]Show, 0, 20)
-	rows, err := raspDb.db.Query("SELECT id, title FROM shows "+filter, params)
+	rows, err := raspDb.db.Query("SELECT id, title FROM shows "+filter, params...)
 	if err != nil && err != io.EOF {
 		return nil, err
 	}
@@ -216,7 +216,7 @@ func (raspDb *RaspTvDatabase) GetShowByID(id int64) (*Show, error) {
 // GetEpisodes gets all episodes from the database with the optional filter
 func (raspDb *RaspTvDatabase) GetEpisodes(filter string, params ...interface{}) ([]Episode, error) {
 	episodes := make([]Episode, 0, 100)
-	rows, err := raspDb.db.Query("SELECT id, title, episodeNumber, season, filepath, length, isIndexed, showId FROM episodes "+filter, params)
+	rows, err := raspDb.db.Query("SELECT id, title, episodeNumber, season, filepath, length, isIndexed, showId FROM episodes "+filter, params...)
 	if err != nil && err != io.EOF {
 		return nil, err
 	}
