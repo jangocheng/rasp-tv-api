@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"strconv"
 
-	"github.com/simonjm/rasp-tv/data"
+	"github.com/simonjm/rasp-tv-api/data"
 
 	"github.com/gorilla/mux"
 )

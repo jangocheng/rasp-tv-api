@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/simonjm/rasp-tv/data"
+	"github.com/simonjm/rasp-tv-api/data"
 )
 
 // GetAllMovies route for getting all of the movies from the databse

@@ -1,6 +1,6 @@
 .DS_Store
 videos
-rasp-tv
+rasp-tv-api
 logs.txt
 raspTv.db
 vendor/*

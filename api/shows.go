@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/simonjm/rasp-tv/data"
+	"github.com/simonjm/rasp-tv-api/data"
 )
 
 // GetAllEpisodes route for gettting all episodes from the database

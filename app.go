@@ -12,8 +12,8 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rs/cors"
-	"github.com/simonjm/rasp-tv/api"
-	"github.com/simonjm/rasp-tv/data"
+	"github.com/simonjm/rasp-tv-api/api"
+	"github.com/simonjm/rasp-tv-api/data"
 )
 
 // getConfig create struct to hold all of the configuration based on current user

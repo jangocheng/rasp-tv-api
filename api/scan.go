@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/simonjm/rasp-tv/data"
+	"github.com/simonjm/rasp-tv-api/data"
 )
 
 // ScanMovies route that walks the movie directory for new video files

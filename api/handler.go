@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/simonjm/rasp-tv/data"
+	"github.com/simonjm/rasp-tv-api/data"
 )
 
 // Context struct that holds other objects that are needed by every handler
