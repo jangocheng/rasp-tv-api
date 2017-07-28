@@ -28,3 +28,10 @@ CREATE TABLE IF NOT EXISTS session (
     isPlaying INTEGER NOT NULL,
     pid INTEGER
 );
+CREATE TABLE IF NOT EXISTS logs (
+    id INTEGER PRIMARY KEY,
+    level TEXT NOT NULL,
+    logDate TEXT NOT NULL DEFAULT(datetime('now', 'localtime')),
+    message TEXT NOT NULL,
+    metadata TEXT
+);

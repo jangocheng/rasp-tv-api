@@ -111,6 +111,7 @@ func main() {
 	router.Handle("/player/session", createHandler(api.NowPlaying)).Methods("GET")
 	router.Handle("/player/session", createHandler(api.ClearSession)).Methods("DELETE", "OPTIONS")
 	router.Handle("/player/session", createHandler(api.UpdateSession)).Methods("POST", "OPTIONS")
+	router.Handle("/logs", createHandler(api.SaveLogs)).Methods("POST", "PUT", "OPTIONS")
 
 	// get port from the environment
 	port := os.Getenv("RASPTV_PORT")

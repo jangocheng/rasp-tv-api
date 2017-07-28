@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
+	"time"
 )
 
 // RaspTvDataFetcher interface for interacting with the database
@@ -24,6 +25,7 @@ type RaspTvDataFetcher interface {
 	SaveSession(session *Session) error
 	GetSession() (*Session, error)
 	ClearSession() error
+	SaveLogs(logs []Log) error
 }
 
 // RaspTvDatabase struct with methods for accessing the database
@@ -274,6 +276,40 @@ func (raspDb *RaspTvDatabase) GetSession() (*Session, error) {
 func (raspDb *RaspTvDatabase) ClearSession() error {
 	_, err := raspDb.db.Exec("DELETE FROM session")
 	return err
+}
+
+// SaveLogs inserts a batch of log entries
+func (raspDb *RaspTvDatabase) SaveLogs(logs []Log) error {
+	tx, err := raspDb.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	query := "INSERT INTO logs (level, logDate, message, metadata) VALUES (?, ?, ?, ?)"
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, log := range logs {
+		date := log.LogDate
+		if date.IsZero() {
+			date = time.Now()
+		}
+
+		var metadata string
+		if !log.Metadata.Valid {
+			metadata = log.Metadata.String
+		}
+
+		_, err := stmt.Exec(log.Level, date, log.Message, metadata)
+		if err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
 }
 
 // Close closes the inner sqlite connection
