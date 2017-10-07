@@ -59,6 +59,8 @@ func (l *Log) UnmarshalJSON(data []byte) error {
 
 	if log.Metadata != nil {
 		l.Metadata = sql.NullString{Valid: true, String: *log.Metadata}
+	} else {
+		l.Metadata = sql.NullString{Valid: false}
 	}
 
 	return nil
