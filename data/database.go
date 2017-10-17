@@ -300,7 +300,7 @@ func (raspDb *RaspTvDatabase) SaveLogs(logs []Log) error {
 		}
 
 		var metadata string
-		if !log.Metadata.Valid {
+		if log.Metadata.Valid {
 			metadata = log.Metadata.String
 		}
 
