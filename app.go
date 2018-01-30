@@ -101,6 +101,7 @@ func main() {
 	router.Handle("/shows", createHandler(api.GetShows)).Methods("GET")
 	router.Handle("/shows/{id}", createHandler(api.GetShow)).Methods("GET")
 	router.Handle("/shows/{id}/seasons", createHandler(api.GetSeasons)).Methods("GET")
+	router.Handle("/shows/{id}/seasons/{season}", createHandler(api.GetEpisodesBySeason)).Methods("GET")
 	router.Handle("/shows/add", createHandler(api.AddShow)).Methods("POST", "OPTIONS")
 	router.Handle("/shows/episodes/{id}", createHandler(api.GetEpisode)).Methods("GET")
 	router.Handle("/shows/episodes/{id}/play", createHandler(api.PlayEpisode)).Methods("GET")

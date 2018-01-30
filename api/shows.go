@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/simonjm/rasp-tv-api/data"
 )
 
@@ -181,6 +183,7 @@ func GetShow(context *Context, rw http.ResponseWriter, req *http.Request) (int, 
 	return http.StatusOK, show, nil
 }
 
+// GetSeasons route for getting a list of the seasons for a show
 func GetSeasons(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
 	id, err := parseIDFromReq(req)
 	if err != nil {
@@ -192,6 +195,25 @@ func GetSeasons(context *Context, rw http.ResponseWriter, req *http.Request) (in
 		return http.StatusInternalServerError, nil, err
 	}
 	return http.StatusOK, seasons, nil
+}
+
+// GetEpisodesBySeason route for getting a list of the episodes from a particular season
+func GetEpisodesBySeason(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
+	id, err := parseIDFromReq(req)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	season, err := strconv.ParseInt(mux.Vars(req)["season"], 10, 64)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	episodes, err := context.Db.GetEpisodes("WHERE showId = ? AND season = ?", id, season)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+	return http.StatusOK, episodes, nil
 }
 
 // SaveEpisode route for saving an episode to the database. The data to save is deserialized from the request body
