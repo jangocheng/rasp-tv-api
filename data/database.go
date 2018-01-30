@@ -19,6 +19,7 @@ type RaspTvDataFetcher interface {
 	UpdateEpisode(episode *Episode) error
 	DeleteEpisode(episode *Episode) error
 	GetShows(filter string, params ...interface{}) ([]Show, error)
+	GetSeasons(showID int64) ([]int, error)
 	GetShowByID(id int64) (*Show, error)
 	GetEpisodes(filter string, params ...interface{}) ([]Episode, error)
 	GetEpisodeByID(id int64) (*Episode, error)
@@ -199,6 +200,28 @@ func (raspDb *RaspTvDatabase) GetShows(filter string, params ...interface{}) ([]
 	}
 
 	return shows, nil
+}
+
+// GetSeasons gets a list of seasons for a show
+func (raspDb *RaspTvDatabase) GetSeasons(showID int64) ([]int, error) {
+	seasons := make([]int, 0, 5)
+	rows, err := raspDb.db.Query("SELECT DISTINCT season FROM episodes WHERE showId = ?", showID)
+	if err != nil && err != io.EOF {
+		return nil, err
+	}
+	defer rows.Close()
+
+	if err == io.EOF {
+		return seasons, nil
+	}
+
+	for rows.Next() {
+		var season int
+		rows.Scan(&season)
+		seasons = append(seasons, season)
+	}
+
+	return seasons, nil
 }
 
 // GetShowByID gets a show from the database by id

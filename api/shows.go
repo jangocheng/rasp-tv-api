@@ -181,6 +181,19 @@ func GetShow(context *Context, rw http.ResponseWriter, req *http.Request) (int, 
 	return http.StatusOK, show, nil
 }
 
+func GetSeasons(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
+	id, err := parseIDFromReq(req)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	seasons, err := context.Db.GetSeasons(id)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+	return http.StatusOK, seasons, nil
+}
+
 // SaveEpisode route for saving an episode to the database. The data to save is deserialized from the request body
 func SaveEpisode(context *Context, rw http.ResponseWriter, req *http.Request) (int, interface{}, error) {
 	episode := &data.Episode{}
